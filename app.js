@@ -1240,7 +1240,7 @@
     // Legacy last seen UI helper stub
   }
 
-  // Disturbance & Detour Alerts System (GTFS-RT, Poikkeusreitit, and Delays)
+  // Disturbance & Detour Alerts System (GTFS-RT & HSL Service Alerts)
   async function fetchDisturbances() {
     const listEl = document.getElementById('disturbance-list');
     const badgeEl = document.getElementById('disturbance-count-badge');
@@ -1248,13 +1248,27 @@
     const items = [];
     const seenTitles = new Set();
     const currentLang = state.currentLang;
+    const nowSec = Math.floor(Date.now() / 1000);
+    const maxFutureSec = nowSec + (7 * 24 * 3600); // 7-day window
 
     try {
       let res = null;
-      try {
-        res = await fetch('https://realtime.hsl.fi/realtime/service-alerts/v2/hsl');
-      } catch (e1) {
-        res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://realtime.hsl.fi/realtime/service-alerts/v2/hsl'));
+      const urls = [
+        'https://realtime.hsl.fi/realtime/service-alerts/v2/hsl',
+        'https://proxy.cors.sh/https://realtime.hsl.fi/realtime/service-alerts/v2/hsl',
+        'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://realtime.hsl.fi/realtime/service-alerts/v2/hsl')
+      ];
+
+      for (const u of urls) {
+        try {
+          const resp = await fetch(u);
+          if (resp && resp.ok) {
+            res = resp;
+            break;
+          }
+        } catch (e) {
+          // Try next fallback URL
+        }
       }
 
       if (res && res.ok) {
@@ -1267,6 +1281,18 @@
           message.entity.forEach((ent) => {
             if (ent.alert) {
               const a = ent.alert;
+
+              // Check if alert is active or upcoming in next 7 days
+              let isActiveOrUpcoming = true;
+              if (a.activePeriod && Array.isArray(a.activePeriod) && a.activePeriod.length > 0) {
+                isActiveOrUpcoming = a.activePeriod.some((period) => {
+                  const pStart = (period.start && Number(period.start) > 0) ? Number(period.start) : 0;
+                  const pEnd = (period.end && Number(period.end) > 0) ? Number(period.end) : Infinity;
+                  return pEnd >= nowSec && pStart <= maxFutureSec;
+                });
+              }
+
+              if (!isActiveOrUpcoming) return;
 
               // Helper to extract localized text from HSL GTFS-RT translation objects
               function getTranslation(transObj) {
@@ -1320,24 +1346,6 @@
                   }
                 });
               }
-
-              // Filter alerts to ONLY include those active today or tomorrow
-              const now = new Date();
-              const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-              const tomorrowEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 23, 59, 59, 999);
-              const windowStartSec = Math.floor(todayStart.getTime() / 1000);
-              const windowEndSec = Math.floor(tomorrowEnd.getTime() / 1000);
-
-              let isActiveInWindow = true;
-              if (a.activePeriod && Array.isArray(a.activePeriod) && a.activePeriod.length > 0) {
-                isActiveInWindow = a.activePeriod.some((period) => {
-                  const pStart = (period.start && Number(period.start) > 0) ? Number(period.start) : 0;
-                  const pEnd = (period.end && Number(period.end) > 0) ? Number(period.end) : Infinity;
-                  return pStart <= windowEndSec && pEnd >= windowStartSec;
-                });
-              }
-
-              if (!isActiveInWindow) return;
 
               // Include alert if it pertains to tram lines or mentions tram keywords
               const isTramAlert = lines.length > 0 || /(?:ratik|tram|spårvagn|raitiovaunu)/i.test(fullText);
