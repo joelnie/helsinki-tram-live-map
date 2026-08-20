@@ -414,45 +414,62 @@
   }
 
   async function fetchGtfsRtVehicles() {
-    try {
-      const response = await fetch(CONFIG.GTFS_RT_HTTP_URL);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      
-      const buffer = await response.arrayBuffer();
-      
-      if (typeof protobuf !== 'undefined') {
-    try {
-      // Inline lightweight GTFS-RT VehiclePositions parser schema fallback
-      const root = protobuf.Root.fromJSON({
-        nested: {
-          transit_realtime: {
-            nested: {
-              FeedMessage: {
-                fields: {
-                  header: { id: 1, type: "FeedHeader" },
-                  entity: { rule: "repeated", id: 2, type: "FeedEntity" }
+    const urls = [
+      'https://api.allorigins.win/raw?url=https://realtime.hsl.fi/realtime/vehicle-positions/v2/hsl',
+      CONFIG.GTFS_RT_HTTP_URL
+    ];
+
+    for (const url of urls) {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) continue;
+        
+        const buffer = await response.arrayBuffer();
+        
+        if (typeof protobuf !== 'undefined') {
+          if (!gtfsPbRoot) {
+            gtfsPbRoot = protobuf.Root.fromJSON(GTFS_RT_SCHEMA);
+          }
+          
+          const FeedMessage = gtfsPbRoot.lookupType('transit_realtime.FeedMessage');
+          const message = FeedMessage.decode(new Uint8Array(buffer));
+          
+          state.lastMsgTimestamp = Date.now();
+          updateConnectionStatus('live', 'Reaaliaika');
+
+          if (message.entity) {
+            message.entity.forEach((entity) => {
+              if (entity.vehicle && entity.vehicle.position) {
+                const vp = entity.vehicle;
+                const rawLine = vp.trip && vp.trip.routeId ? String(vp.trip.routeId).trim() : '1';
+                const lineKey = normalizeLineKey(rawLine);
+
+                if (CONFIG.DEFAULT_LINES.includes(lineKey)) {
+                  const vehId = String((vp.vehicle && (vp.vehicle.id || vp.vehicle.label)) || entity.id);
+                  
+                  updateVehicleOnMap({
+                    id: vehId,
+                    key: `veh_${vehId}`,
+                    line: lineKey,
+                    rawLine: rawLine,
+                    lat: vp.position.latitude,
+                    lng: vp.position.longitude,
+                    heading: vp.position.bearing || 0,
+                    speed: typeof vp.position.speed === 'number' ? Math.round(vp.position.speed * 3.6) : 0,
+                    delay: 0,
+                    lastUpdated: Date.now()
+                  });
                 }
-              },
-              FeedHeader: { fields: { gtfsRealtimeVersion: { id: 1, type: "string" } } },
-              FeedEntity: {
-                fields: {
-                  id: { id: 1, type: "string" },
-                  vehicle: { id: 4, type: "VehiclePosition" }
-                }
-              },
-              VehiclePosition: {
-                fields: {
-                  trip: { id: 1, type: "TripDescriptor" },
-                  position: { id: 2, type: "Position" },
-                  vehicle: { id: 8, type: "VehicleDescriptor" },
-                  timestamp: { id: 5, type: "uint64" }
-                }
-              },
-              TripDescriptor: { fields: { routeId: { id: 5, type: "string" } } },
-              Position: {
-                fields: {
-                  latitude: { id: 1, type: "float" },
-                  longitude: { id: 2, type: "float" },
+              }
+            });
+          }
+          return;
+        }
+      } catch (err) {
+        console.warn('GTFS-RT fetch error:', url, err);
+      }
+    }
+  }
   // =========================================================================
   // VEHICLE MARKER & MAP RENDERER
   // =========================================================================
