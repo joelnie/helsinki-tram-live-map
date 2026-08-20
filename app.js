@@ -942,23 +942,29 @@
     state.currentTheme = theme;
     if (save) localStorage.setItem('app_theme', theme);
 
-    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-    const metaAppleStatusBar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+    const metaThemeColor = document.getElementById('meta-theme-color') || document.querySelector('meta[name="theme-color"]');
+    const metaAppleStatusBar = document.getElementById('meta-apple-status') || document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
 
     if (theme === 'light') {
       document.documentElement.classList.add('light-theme');
       document.body.classList.add('light-theme');
+      document.documentElement.style.backgroundColor = '#ffffff';
+      document.body.style.backgroundColor = '#ffffff';
       if (metaThemeColor) metaThemeColor.setAttribute('content', '#ffffff');
       if (metaAppleStatusBar) metaAppleStatusBar.setAttribute('content', 'default');
     } else {
       document.documentElement.classList.remove('light-theme');
       document.body.classList.remove('light-theme');
+      document.documentElement.style.backgroundColor = '#0f172a';
+      document.body.style.backgroundColor = '#0f172a';
       if (metaThemeColor) metaThemeColor.setAttribute('content', '#0f172a');
       if (metaAppleStatusBar) metaAppleStatusBar.setAttribute('content', 'black-translucent');
     }
 
-    document.getElementById('btn-theme-dark').classList.toggle('active', theme === 'dark');
-    document.getElementById('btn-theme-light').classList.toggle('active', theme === 'light');
+    const btnDark = document.getElementById('btn-theme-dark');
+    const btnLight = document.getElementById('btn-theme-light');
+    if (btnDark) btnDark.classList.toggle('active', theme === 'dark');
+    if (btnLight) btnLight.classList.toggle('active', theme === 'light');
   }
 
   function setPalette(paletteKey, save = true) {
