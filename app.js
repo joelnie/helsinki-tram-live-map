@@ -942,23 +942,21 @@
     state.currentTheme = theme;
     if (save) localStorage.setItem('app_theme', theme);
 
-    const metaThemeColor = document.getElementById('meta-theme-color') || document.querySelector('meta[name="theme-color"]');
-    const metaAppleStatusBar = document.getElementById('meta-apple-status') || document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+    const isLight = theme === 'light';
+    const targetColor = isLight ? '#ffffff' : '#0f172a';
 
-    if (theme === 'light') {
-      document.documentElement.classList.add('light-theme');
-      document.body.classList.add('light-theme');
-      document.documentElement.style.backgroundColor = '#ffffff';
-      document.body.style.backgroundColor = '#ffffff';
-      if (metaThemeColor) metaThemeColor.setAttribute('content', '#ffffff');
-      if (metaAppleStatusBar) metaAppleStatusBar.setAttribute('content', 'default');
-    } else {
-      document.documentElement.classList.remove('light-theme');
-      document.body.classList.remove('light-theme');
-      document.documentElement.style.backgroundColor = '#0f172a';
-      document.body.style.backgroundColor = '#0f172a';
-      if (metaThemeColor) metaThemeColor.setAttribute('content', '#0f172a');
-      if (metaAppleStatusBar) metaAppleStatusBar.setAttribute('content', 'black-translucent');
+    document.documentElement.classList.toggle('light-theme', isLight);
+    document.body.classList.toggle('light-theme', isLight);
+    document.documentElement.style.backgroundColor = targetColor;
+    document.body.style.backgroundColor = targetColor;
+
+    document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+      meta.setAttribute('content', targetColor);
+    });
+
+    const metaAppleStatusBar = document.getElementById('meta-apple-status') || document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+    if (metaAppleStatusBar) {
+      metaAppleStatusBar.setAttribute('content', isLight ? 'default' : 'black-translucent');
     }
 
     const btnDark = document.getElementById('btn-theme-dark');
