@@ -1022,7 +1022,7 @@ body.light-theme .disturbance-item {
   transform: translateX(-50%);
   z-index: 1000;
   width: min(calc(100vw - 24px), 540px);
-  background: rgba(15, 23, 42, 0.85);
+  background: var(--bg-glass);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-glass);
@@ -1054,6 +1054,7 @@ body.light-theme .disturbance-item {
 }
 
 .circle-line-btn {
+  position: relative;
   flex: 0 0 34px;
   width: 34px;
   height: 34px;
@@ -1067,10 +1068,14 @@ body.light-theme .disturbance-item {
   justify-content: center;
   cursor: pointer;
   background: rgba(255, 255, 255, 0.12);
-  opacity: 0.45;
+  opacity: 0.55;
   filter: grayscale(40%);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
+}
+
+body.light-theme .circle-line-btn {
+  background: rgba(0, 0, 0, 0.08);
 }
 
 .circle-line-btn:active {

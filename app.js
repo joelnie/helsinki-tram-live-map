@@ -942,10 +942,14 @@
     state.currentTheme = theme;
     if (save) localStorage.setItem('app_theme', theme);
 
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+
     if (theme === 'light') {
       document.body.classList.add('light-theme');
+      if (metaThemeColor) metaThemeColor.setAttribute('content', '#f1f5f9');
     } else {
       document.body.classList.remove('light-theme');
+      if (metaThemeColor) metaThemeColor.setAttribute('content', '#0f172a');
     }
 
     document.getElementById('btn-theme-dark').classList.toggle('active', theme === 'dark');
