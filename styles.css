@@ -899,7 +899,7 @@ body.light-theme .palette-option-btn {
    ========================================================================== */
 .disturbance-container {
   position: absolute;
-  bottom: calc(var(--safe-bottom) + 72px);
+  bottom: 60px;
   left: 14px;
   z-index: 1050;
   display: flex;
@@ -1050,7 +1050,7 @@ body.light-theme .disturbance-item {
    ========================================================================== */
 .quick-line-bar {
   position: absolute;
-  bottom: calc(var(--safe-bottom) + 12px);
+  bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
