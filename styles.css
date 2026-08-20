@@ -1096,7 +1096,7 @@ body.light-theme .disturbance-item {
   align-items: center;
   gap: 8px;
   overflow-x: auto;
-  padding: 6px 6px;
+  padding: 4px 4px;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
