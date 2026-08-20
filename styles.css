@@ -118,12 +118,7 @@ body {
 }
 
 .leaflet-container .leaflet-control-attribution {
-  background: transparent !important;
-  color: rgba(100, 116, 139, 0.6) !important;
-  font-size: 9px !important;
-  padding: 0 6px !important;
-  margin-bottom: max(var(--safe-bottom), 2px) !important;
-  box-shadow: none !important;
+  display: none !important;
 }
 
 .leaflet-container .leaflet-control-attribution a {

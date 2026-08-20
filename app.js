@@ -83,7 +83,7 @@
       center: CONFIG.HELSINKI_CENTER,
       zoom: CONFIG.DEFAULT_ZOOM,
       zoomControl: false,
-      attributionControl: true
+      attributionControl: false
     });
 
     // CartoDB Positron Tile Layer (crisp, beautiful retina display map)
