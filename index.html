@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Helsinki Live Tram Tracker | Real-Time Map PWA</title>
+  
+  <!-- Primary Meta Tags -->
+  <meta name="title" content="Helsinki Live Tram Tracker">
+  <meta name="description" content="Real-time live positioning of Helsinki trams and Light Rail Line 15. Powered by HSL open data stream. PWA optimized for iPhone Safari and mobile devices.">
+  <meta name="theme-color" content="#00985f">
+  
+  <!-- iOS Safari PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tram Tracker">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  
+  <!-- Web App Manifest & Favicon -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <!-- App Custom Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Main Map Container -->
+  <div id="map" aria-label="Helsinki Tram Map"></div>
+
+  <!-- Glassmorphism Top Header Bar -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="brand-badge">
+        <svg class="brand-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+          <path d="M12 2C8 2 4.5 3 4.5 7.5V17c0 1.5 1.2 2.5 2.5 2.5l-1.5 1.5v.5h13v-.5L17 19.5c1.3 0 2.5-1 2.5-2.5V7.5C19.5 3 16 2 12 2zm0 2c3.2 0 5.2.7 5.4 3H6.6C6.8 4.7 8.8 4 12 4zm5.5 13c0 .3-.2.5-.5.5H7c-.3 0-.5-.2-.5-.5V13h11v4zm0-6H6.5V9h11v2z"/>
+          <circle cx="8.5" cy="15.5" r="1"/>
+          <circle cx="15.5" cy="15.5" r="1"/>
+        </svg>
+        <span class="brand-title">Tram Tracker</span>
+      </div>
+      
+      <div id="status-badge" class="status-badge connecting" title="Connection status">
+        <span class="status-dot"></span>
+        <span id="status-text">Connecting...</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div id="tram-count-badge" class="tram-count-badge" title="Trams currently on map">
+        <span id="tram-count-val">0</span>
+        <span class="count-label">trams</span>
+      </div>
+
+      <button id="btn-filter" class="btn-icon" aria-label="Filter tram lines">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        </svg>
+        <span id="filter-badge" class="badge-count hidden">0</span>
+      </button>
+
+      <button id="btn-locate" class="btn-icon" aria-label="Center map on current location">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="2" x2="12" y2="6"></line>
+          <line x1="12" y1="18" x2="12" y2="22"></line>
+          <line x1="2" y1="12" x2="6" y2="12"></line>
+          <line x1="18" y1="12" x2="22" y2="12"></line>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- iOS Add to Home Screen Banner (Safari Non-Standalone Prompt) -->
+  <div id="ios-pwa-banner" class="ios-pwa-banner hidden">
+    <div class="banner-content">
+      <img src="icons/icon-192.png" alt="App Icon" class="banner-icon">
+      <div class="banner-text">
+        <strong>Install Helsinki Tram App</strong>
+        <p>Tap <span class="share-icon">⎋</span> Share, then select <strong>Add to Home Screen</strong> for full-screen view.</p>
+      </div>
+      <button id="btn-close-pwa-banner" class="btn-dismiss" aria-label="Dismiss banner">✕</button>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Tram Line Filter Modal / Sheet -->
+  <div id="filter-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">Filter Tram Lines</h2>
+          <p class="modal-subtitle">Choose which tram routes to show on the live map</p>
+        </div>
+        <button id="btn-close-filter" class="btn-close" aria-label="Close filter modal">✕</button>
+      </div>
+
+      <div class="filter-actions">
+        <button id="btn-select-all" class="btn-chip">Select All</button>
+
+        <button id="btn-select-main" class="btn-chip">City Lines (1–10)</button>
+        <button id="btn-select-lightrail" class="btn-chip">Raide-Jokeri (15)</button>
+        <button id="btn-clear-all" class="btn-chip btn-chip-secondary">Clear All</button>
+      </div>
+
+      <div id="line-grid" class="line-grid">
+        <!-- Tram line toggle buttons injected by app.js -->
+      </div>
+
+      <div class="modal-footer">
+        <span id="filter-summary-text" class="filter-summary">Showing all lines</span>
+        <button id="btn-apply-filter" class="btn-primary">Apply Filters</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tram Detail Bottom Drawer -->
+  <div id="detail-drawer" class="detail-drawer hidden">
+    <div class="drawer-handle-bar">
+      <div class="drawer-handle"></div>
+    </div>
+
+    <div class="drawer-content">
+      <div class="drawer-header">
+        <div class="tram-title-group">
+          <span id="drawer-line-badge" class="line-badge">7</span>
+          <div>
+            <h3 id="drawer-title" class="drawer-title">Tram Line 7</h3>
+            <p id="drawer-subtitle" class="drawer-subtitle">Towards Länsiterminaali T2</p>
+          </div>
+        </div>
+        <button id="btn-close-drawer" class="btn-close" aria-label="Close vehicle details">✕</button>
+      </div>
+
+      <div class="drawer-stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">Speed</span>
+          <span id="stat-speed" class="stat-value">18 <small>km/h</small></span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Status / Delay</span>
+          <span id="stat-delay" class="stat-value status-on-time">On time</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Vehicle Unit</span>
+          <span id="stat-veh" class="stat-value">#904</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Heading</span>
+          <span id="stat-hdg" class="stat-value">180° SSW</span>
+        </div>
+      </div>
+
+      <div class="drawer-actions">
+        <button id="btn-track-tram" class="btn-primary">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="8"></circle>
+            <line x1="12" y1="2" x2="12" y2="6"></line>
+            <line x1="12" y1="18" x2="12" y2="22"></line>
+            <line x1="2" y1="12" x2="6" y2="12"></line>
+            <line x1="18" y1="12" x2="22" y2="12"></line>
+          </svg>
+          Follow Vehicle
+        </button>
+      </div>
+
+      <div class="drawer-footer-meta">
+        <span id="drawer-last-seen">Last signal: 2 sec ago</span>
+        <span id="drawer-data-source">Source: HSL HFP v2</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Unobtrusive Footer Bar -->
+  <footer class="app-footer">
+    <div class="footer-info">
+      <span id="last-update-time">Data streaming...</span>
+      <span class="footer-dot">•</span>
+      <span class="footer-attr">HSL Open Data</span>
+    </div>
+    <div class="footer-controls">
+      <button id="btn-recenter" class="btn-pill" title="Reset view to Helsinki">
+        Recenter
+      </button>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <!-- MQTT.js CDN -->
+  <script src="https://unpkg.com/mqtt@5.3.4/dist/mqtt.min.js"></script>
+
+  <!-- Protobuf.js CDN (for GTFS-RT Fallback decoding) -->
+  <script src="https://cdn.jsdelivr.net/npm/protobufjs@7.2.5/dist/protobuf.min.js"></script>
+
+  <!-- Main Application Logic -->
+  <script src="app.js"></script>
+
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('PWA Service Worker registered:', reg.scope))
+          .catch(err => console.warn('Service Worker registration failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>
