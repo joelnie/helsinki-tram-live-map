@@ -232,6 +232,28 @@
     </div>
   </div>
 
+  <!-- Lower Left Corner Disturbance Button & Pop-Up Card -->
+  <div id="disturbance-container" class="disturbance-container">
+    <button id="btn-disturbance-toggle" class="btn-disturbance" aria-label="Häiriötiedotteet" title="Häiriötiedotteet">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+      <span id="disturbance-count-badge" class="disturbance-badge hidden">0</span>
+    </button>
+
+    <div id="disturbance-popover" class="disturbance-popover hidden">
+      <div class="popover-header">
+        <h3 id="txt-disturbance-title" class="popover-title">Häiriötiedotteet</h3>
+        <button id="btn-close-disturbance" class="btn-close-sm" aria-label="Sulje">✕</button>
+      </div>
+      <div id="disturbance-list" class="popover-body">
+        <p id="txt-empty-disturbance" class="empty-disturbance-text">Ei aktiivisia häiriöitä</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Bottom Circular Tram Line Filter Bar (Base View) -->
   <nav id="quick-line-bar" class="quick-line-bar" aria-label="Valitse näytettävät linjat">
     <div id="circle-filter-track" class="circle-filter-track">

@@ -862,6 +862,156 @@ body.light-theme .palette-option-btn {
 }
 
 /* ==========================================================================
+   LOWER LEFT DISTURBANCES BUTTON & POPOVER CARD
+   ========================================================================== */
+.disturbance-container {
+  position: absolute;
+  bottom: calc(var(--safe-bottom) + 14px);
+  left: 14px;
+  z-index: 1050;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.btn-disturbance {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.btn-disturbance:active {
+  transform: scale(0.92);
+}
+
+.disturbance-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--text-main);
+  color: var(--bg-dark);
+  font-size: 10px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.disturbance-popover {
+  position: absolute;
+  bottom: 48px;
+  left: 0;
+  width: min(calc(100vw - 28px), 320px);
+  max-height: 280px;
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass);
+  border-radius: 20px;
+  padding: 14px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+  transform: translateY(0) scale(1);
+  opacity: 1;
+  transform-origin: bottom left;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+}
+
+.disturbance-popover.hidden {
+  transform: translateY(12px) scale(0.95);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.popover-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.btn-close-sm {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popover-body {
+  overflow-y: auto;
+  max-height: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.empty-disturbance-text {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 12px 0;
+}
+
+.disturbance-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+}
+
+body.light-theme .disturbance-item {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.disturbance-item-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.disturbance-item-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* ==========================================================================
    CIRCULAR LINE FILTER BAR (BASE VIEW)
    ========================================================================== */
 .quick-line-bar {

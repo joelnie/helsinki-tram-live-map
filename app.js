@@ -54,6 +54,7 @@
     mqttTimeoutTimer: null,
     lastMsgTimestamp: null,
     staleCheckTimer: null,
+    disturbances: [],
     currentLang: localStorage.getItem('app_lang') || 'fi',
     currentTheme: localStorage.getItem('app_theme') || 'dark',
     currentPalette: localStorage.getItem('tram_palette') || 'default'
@@ -70,8 +71,10 @@
     checkIosPwaBanner();
     loadRouteData();
     startRealtimeEngine();
+    fetchDisturbances();
     
-    // Periodically remove vehicles with stale signals
+    // Periodically fetch disturbances and clean stale vehicles
+    setInterval(fetchDisturbances, 60000);
     state.staleCheckTimer = setInterval(cleanStaleVehicles, 30000);
     // UI timer update
     setInterval(updateLastSeenUI, 2000);
@@ -831,7 +834,9 @@
       followingTram: "Seurataan vaunua kartalla",
       dataSource: "Lähde: HSL Avoin Data",
       pwaTitle: "Asenna Spora-Live",
-      pwaDesc: "Paina ⎋ Jaa, ja valitse Lisää kotivalikkoon."
+      pwaDesc: "Paina ⎋ Jaa, ja valitse Lisää kotivalikkoon.",
+      disturbancesTitle: "Häiriötiedotteet",
+      noDisturbances: "Ei aktiivisia häiriöitä"
     },
     en: {
       brand: "Spora-Live",
@@ -862,7 +867,9 @@
       followingTram: "Following tram on map",
       dataSource: "Source: HSL Open Data",
       pwaTitle: "Install Spora-Live",
-      pwaDesc: "Tap ⎋ Share, then select Add to Home Screen."
+      pwaDesc: "Tap ⎋ Share, then select Add to Home Screen.",
+      disturbancesTitle: "Service Disturbances",
+      noDisturbances: "No active disturbances"
     }
   };
 
@@ -911,6 +918,11 @@
       const key = el.dataset.key;
       if (key && t[key]) el.textContent = t[key];
     });
+
+    const txtDistTitle = document.getElementById('txt-disturbance-title');
+    if (txtDistTitle) txtDistTitle.textContent = t.disturbancesTitle;
+    const txtEmptyDist = document.getElementById('txt-empty-disturbance');
+    if (txtEmptyDist) txtEmptyDist.textContent = t.noDisturbances;
 
     const pwaTitle = document.getElementById('txt-pwa-title');
     if (pwaTitle) pwaTitle.textContent = t.pwaTitle;
@@ -1026,6 +1038,30 @@
       }
       const t = TRANSLATIONS[state.currentLang] || TRANSLATIONS.fi;
       showToast(t.followingTram, 'info');
+    });
+
+    // Lower Left Disturbance Popover Controls
+    const btnDistToggle = document.getElementById('btn-disturbance-toggle');
+    const distPopover = document.getElementById('disturbance-popover');
+    const btnCloseDist = document.getElementById('btn-close-disturbance');
+
+    if (btnDistToggle && distPopover) {
+      btnDistToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        distPopover.classList.toggle('hidden');
+      });
+    }
+
+    if (btnCloseDist && distPopover) {
+      btnCloseDist.addEventListener('click', () => {
+        distPopover.classList.add('hidden');
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      if (distPopover && !distPopover.contains(e.target) && !btnDistToggle.contains(e.target)) {
+        distPopover.classList.add('hidden');
+      }
     });
 
     // Locate user button
