@@ -1079,12 +1079,22 @@ body.light-theme .circle-line-btn {
   transform: scale(0.92);
 }
 
-.circle-line-btn.active {
+.circle-line-btn.mode-both {
   opacity: 1;
   filter: grayscale(0%);
-  border-color: #ffffff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  transform: scale(1.08);
+  transform: scale(1.04);
+}
+
+.circle-line-btn.mode-tracks_only {
+  opacity: 0.95;
+  filter: grayscale(0%);
+  transform: scale(1);
+}
+
+.circle-line-btn.mode-hidden {
+  opacity: 0.35;
+  filter: grayscale(80%);
+  transform: scale(0.94);
 }
 
 .btn-pill {

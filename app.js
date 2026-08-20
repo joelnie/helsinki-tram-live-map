@@ -55,6 +55,7 @@
     lastMsgTimestamp: null,
     staleCheckTimer: null,
     disturbances: [],
+    lineModes: new Map(), // line -> 'both' | 'tracks_only' | 'hidden'
     currentLang: localStorage.getItem('app_lang') || 'fi',
     currentTheme: localStorage.getItem('app_theme') || 'dark',
     currentPalette: localStorage.getItem('tram_palette') || 'default'
@@ -176,29 +177,24 @@
   }
 
   function renderRouteTracks() {
-    if (!state.routePolylineGroup) return;
+    if (!state.routePolylineGroup || !state.routeData) return;
     state.routePolylineGroup.clearLayers();
 
-    if (!state.showRouteTracks || !state.routeData) return;
+    const visibleTrackLines = CONFIG.DEFAULT_LINES.filter((line) => {
+      const mode = state.lineModes.get(line) || 'both';
+      return mode === 'both' || mode === 'tracks_only';
+    }).sort((a, b) => (parseInt(a, 10) || 99) - (parseInt(b, 10) || 99));
 
-    // Get sorted active line list for deterministic side-by-side track offset
-    const activeLineList = Array.from(state.activeFilters).sort((a, b) => {
-      const numA = parseInt(a, 10) || 99;
-      const numB = parseInt(b, 10) || 99;
-      return numA - numB;
-    });
+    const totalActive = visibleTrackLines.length;
 
-    const totalActive = activeLineList.length;
-
-    activeLineList.forEach((lineKey, idx) => {
+    visibleTrackLines.forEach((lineKey, idx) => {
       if (state.routeData[lineKey]) {
         const segments = state.routeData[lineKey];
         const meta = LINE_META[lineKey] || { color: '#10b981' };
         const isLightRail = lineKey === '15';
         const weight = isLightRail ? 4.5 : 3.5;
 
-        // Calculate parallel track offset
-        const offsetStep = 0.000030; // ~3.3 meters lateral offset per line position
+        const offsetStep = 0.000030;
         const offsetDist = (idx - (totalActive - 1) / 2) * offsetStep;
 
         segments.forEach((seg) => {
@@ -476,7 +472,8 @@
   // VEHICLE MARKER & MAP RENDERER
   // =========================================================================
   function updateVehicleOnMap(data) {
-    const isFiltered = state.activeFilters.has(data.line);
+    const mode = state.lineModes.get(data.line) || 'both';
+    const isVehVisible = mode === 'both';
     const existing = state.vehicles.get(data.key);
 
     if (existing) {
@@ -495,6 +492,12 @@
           const pointer = wrapper.querySelector('.tram-direction-pointer');
           if (pointer) pointer.style.transform = `rotate(${data.heading}deg) translateY(-20px)`;
         }
+
+        if (isVehVisible) {
+          if (!state.map.hasLayer(existing.marker)) existing.marker.addTo(state.map);
+        } else {
+          if (state.map.hasLayer(existing.marker)) state.map.removeLayer(existing.marker);
+        }
       }
 
       if (state.selectedVehicleId === data.id && state.isFollowing) {
@@ -506,7 +509,7 @@
       const marker = createTramMarker(data);
       const vehObj = { ...data, marker: marker };
 
-      if (isFiltered) {
+      if (isVehVisible) {
         marker.addTo(state.map);
       }
 
@@ -641,20 +644,32 @@
   // TRAM LINE FILTER SYSTEM
   // =========================================================================
   function initFilters() {
-    const saved = localStorage.getItem('tram_active_filters');
-    if (saved) {
+    state.lineModes = new Map();
+    const savedModes = localStorage.getItem('tram_line_modes');
+    if (savedModes) {
       try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          state.activeFilters = new Set(parsed);
-        } else {
-          state.activeFilters = new Set(CONFIG.DEFAULT_LINES);
-        }
+        const parsed = JSON.parse(savedModes);
+        CONFIG.DEFAULT_LINES.forEach((line) => {
+          state.lineModes.set(line, parsed[line] || 'both');
+        });
       } catch (e) {
-        state.activeFilters = new Set(CONFIG.DEFAULT_LINES);
+        CONFIG.DEFAULT_LINES.forEach((line) => state.lineModes.set(line, 'both'));
       }
     } else {
-      state.activeFilters = new Set(CONFIG.DEFAULT_LINES);
+      const savedFilters = localStorage.getItem('tram_active_filters');
+      if (savedFilters) {
+        try {
+          const parsed = JSON.parse(savedFilters);
+          const activeSet = new Set(parsed);
+          CONFIG.DEFAULT_LINES.forEach((line) => {
+            state.lineModes.set(line, activeSet.has(line) ? 'both' : 'hidden');
+          });
+        } catch (e) {
+          CONFIG.DEFAULT_LINES.forEach((line) => state.lineModes.set(line, 'both'));
+        }
+      } else {
+        CONFIG.DEFAULT_LINES.forEach((line) => state.lineModes.set(line, 'both'));
+      }
     }
 
     renderCircleFilterBar();
@@ -662,18 +677,26 @@
   }
 
   function toggleLineFilter(line) {
-    if (state.activeFilters.has(line)) {
-      state.activeFilters.delete(line);
+    const currentMode = state.lineModes.get(line) || 'both';
+    let newMode = 'both';
+
+    if (currentMode === 'both') {
+      newMode = 'tracks_only';
+    } else if (currentMode === 'tracks_only') {
+      newMode = 'hidden';
     } else {
-      state.activeFilters.add(line);
+      newMode = 'both';
     }
 
-    localStorage.setItem('tram_active_filters', JSON.stringify(Array.from(state.activeFilters)));
+    state.lineModes.set(line, newMode);
+
+    const modesObj = {};
+    state.lineModes.forEach((v, k) => modesObj[k] = v);
+    localStorage.setItem('tram_line_modes', JSON.stringify(modesObj));
 
     state.vehicles.forEach((veh) => {
-      const isVisible = state.activeFilters.has(veh.line);
-      if (veh.marker) {
-        if (isVisible) {
+      if (veh.line === line && veh.marker) {
+        if (newMode === 'both') {
           if (!state.map.hasLayer(veh.marker)) veh.marker.addTo(state.map);
         } else {
           if (state.map.hasLayer(veh.marker)) state.map.removeLayer(veh.marker);
@@ -693,23 +716,43 @@
     if (!track) return;
     track.innerHTML = '';
 
+    const isPale = state.currentPalette === 'pale';
+    const textColor = isPale ? '#1e293b' : '#ffffff';
+    const borderColor = isPale ? '#1e293b' : '#ffffff';
+    const t = TRANSLATIONS[state.currentLang] || TRANSLATIONS.fi;
+
     CONFIG.DEFAULT_LINES.forEach((line) => {
-      const isSelected = state.activeFilters.has(line);
+      const mode = state.lineModes.get(line) || 'both';
       const meta = LINE_META[line] || { color: '#10b981' };
 
       const btn = document.createElement('button');
-      btn.className = `circle-line-btn ${isSelected ? 'active' : ''}`;
+      btn.className = `circle-line-btn mode-${mode}`;
       btn.dataset.line = line;
+      btn.dataset.mode = mode;
       btn.textContent = line;
-      btn.title = `Linja ${line}`;
 
-      if (isSelected) {
+      const routeName = (typeof meta.name === 'object') ? (meta.name[state.currentLang] || meta.name.fi) : meta.name;
+      const modeLabel = (mode === 'both') ? (t.brand ? 'Näytetään vaunut ja reitti' : 'Showing trams and line') : (mode === 'tracks_only') ? (t.brand ? 'Vain reitti näkyvissä' : 'Tracks only visible') : (t.brand ? 'Piilotettu' : 'Hidden');
+
+      btn.title = `${t.linePrefix} ${line}: ${routeName} (${modeLabel})`;
+
+      if (mode === 'both') {
         btn.style.backgroundColor = meta.color;
-        btn.style.borderColor = '#ffffff';
+        btn.style.color = textColor;
+        btn.style.borderColor = borderColor;
         btn.style.boxShadow = `0 4px 12px ${meta.color}66`;
-      } else {
+        btn.style.borderStyle = 'solid';
+      } else if (mode === 'tracks_only') {
         btn.style.backgroundColor = meta.color + '33';
+        btn.style.color = meta.color;
+        btn.style.borderColor = meta.color;
+        btn.style.borderStyle = 'dashed';
+        btn.style.boxShadow = `0 0 10px ${meta.color}44`;
+      } else {
+        btn.style.backgroundColor = 'rgba(255, 255, 255, 0.06)';
+        btn.style.color = isPale ? '#94a3b8' : 'rgba(255, 255, 255, 0.4)';
         btn.style.borderColor = 'transparent';
+        btn.style.borderStyle = 'solid';
         btn.style.boxShadow = 'none';
       }
 
@@ -1141,7 +1184,8 @@
   function updateTramCounterUI() {
     let activeCount = 0;
     state.vehicles.forEach(v => {
-      if (state.activeFilters.has(v.line)) activeCount++;
+      const mode = state.lineModes.get(v.line) || 'both';
+      if (mode === 'both') activeCount++;
     });
     document.getElementById('tram-count-val').textContent = activeCount;
   }
