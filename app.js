@@ -24,13 +24,13 @@
   // Line Descriptions, Destinations, & Distinct Color Palette for display
   const LINE_META = {
     '1': { name: { fi: 'Eira – Käpylä', en: 'Eira – Käpylä' }, color: '#10b981' },
-    '2': { name: { fi: 'Olympiaterminaali – Pasila', en: 'Olympia Terminal – Pasila' }, color: '#f97316' },
+    '2': { name: { fi: 'Olympiaterminaali – Pasila', en: 'Olympia Terminal – Pasila' }, color: '#2563eb' },
     '3': { name: { fi: 'Olympiaterminaali – Meilahti', en: 'Olympia Terminal – Meilahti' }, color: '#f59e0b' },
     '4': { name: { fi: 'Katajanokka – Munkkiniemi', en: 'Katajanokka – Munkkiniemi' }, color: '#84cc16' },
     '5': { name: { fi: 'Katajanokan terminaali – Rautatientori', en: 'Katajanokka Terminal – Railway Station' }, color: '#f43f5e' },
     '6': { name: { fi: 'Hietalahti – Arabia', en: 'Hietalahti – Arabia' }, color: '#ec4899' },
     '7': { name: { fi: 'Länsiterminaali – Meilahden sairaala', en: 'West Terminal – Meilahti Hospital' }, color: '#a855f7' },
-    '8': { name: { fi: 'Jätkäsaari – Arabia', en: 'Jätkäsaari – Arabia' }, color: '#06b6d4' },
+    '8': { name: { fi: 'Jätkäsaari – Arabia', en: 'Jätkäsaari – Arabia' }, color: '#dc2626' },
     '9': { name: { fi: 'Länsiterminaali – Ilmala', en: 'West Terminal – Ilmala' }, color: '#14b8a6' },
     '10': { name: { fi: 'Kirurgi – Pikku Huopalahti', en: 'Surgical Hospital – Pikku Huopalahti' }, color: '#6366f1' },
     '13': { name: { fi: 'Kalasatama – Pasila', en: 'Kalasatama – Pasila' }, color: '#eab308' },
@@ -775,8 +775,8 @@
   // =========================================================================
   const PALETTES = {
     default: {
-      '1': '#10b981', '2': '#f97316', '3': '#f59e0b', '4': '#84cc16',
-      '5': '#f43f5e', '6': '#ec4899', '7': '#a855f7', '8': '#06b6d4',
+      '1': '#10b981', '2': '#2563eb', '3': '#f59e0b', '4': '#84cc16',
+      '5': '#f43f5e', '6': '#ec4899', '7': '#a855f7', '8': '#dc2626',
       '9': '#14b8a6', '10': '#6366f1', '13': '#eab308', '15': '#007ac9'
     },
     rainbow: {
