@@ -521,7 +521,9 @@
 
     const iconHtml = `
       <div class="tram-marker-wrapper ${isSelected ? 'selected' : ''}" id="marker-${data.id}">
-        <div class="tram-direction-pointer" style="transform: rotate(${data.heading}deg) translateY(-20px)"></div>
+        <svg class="tram-direction-pointer" viewBox="0 0 16 16" style="transform: rotate(${data.heading}deg) translateY(-20px)">
+          <polygon points="8,1 14,14 8,10 2,14" fill="${meta.color}" stroke="#ffffff" stroke-width="1.8" stroke-linejoin="round" />
+        </svg>
         <div class="tram-marker-icon" style="background-color: ${meta.color}; box-shadow: 0 4px 12px ${meta.color}77;">${data.rawLine}</div>
       </div>
     `;

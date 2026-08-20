@@ -890,18 +890,16 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 0;
-  height: 0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-bottom: 9px solid #ffffff;
-  margin-left: -5px;
-  margin-top: -4.5px;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  margin-top: -8px;
   transform-origin: 50% 50%;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
   transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
   z-index: 2;
   pointer-events: none;
+  overflow: visible;
 }
 
 /* Main Circle Badge */
