@@ -785,14 +785,14 @@
         btn.style.backgroundColor = meta.color;
         btn.style.color = textColor;
         btn.style.borderColor = borderColor;
-        btn.style.boxShadow = `0 4px 12px ${meta.color}66`;
+        btn.style.boxShadow = `0 2px 8px ${meta.color}66`;
         btn.style.borderStyle = 'solid';
       } else if (mode === 'tracks_only') {
         btn.style.backgroundColor = meta.color + (isLight ? '22' : '33');
         btn.style.color = meta.color;
         btn.style.borderColor = meta.color;
         btn.style.borderStyle = 'dashed';
-        btn.style.boxShadow = `0 0 10px ${meta.color}44`;
+        btn.style.boxShadow = `0 0 6px ${meta.color}55`;
       } else {
         if (isLight) {
           btn.style.backgroundColor = '#e2e8f0';

@@ -1079,7 +1079,7 @@ body.light-theme .disturbance-item {
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-glass);
   border-radius: 28px;
-  padding: 6px 10px;
+  padding: 4px 6px;
   box-shadow: var(--shadow-lg);
   pointer-events: auto;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
@@ -1096,7 +1096,7 @@ body.light-theme .disturbance-item {
   align-items: center;
   gap: 8px;
   overflow-x: auto;
-  padding: 2px 2px;
+  padding: 6px 6px;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
