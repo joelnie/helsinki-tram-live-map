@@ -718,41 +718,7 @@
   }
 
   function renderFilterButtons() {
-    const grid = document.getElementById('line-grid');
-    grid.innerHTML = '';
-
-    CONFIG.DEFAULT_LINES.forEach((line) => {
-      const isSelected = state.activeFilters.has(line);
-      const isLightRail = line === '15';
-      const meta = LINE_META[line] || { color: '#10b981' };
-
-      const btn = document.createElement('button');
-      btn.className = `line-toggle-btn ${isSelected ? 'active' : ''}`;
-      btn.dataset.line = line;
-      
-      if (isSelected) {
-        btn.style.borderColor = meta.color;
-        btn.style.backgroundColor = meta.color + '22';
-        btn.style.boxShadow = `0 4px 12px ${meta.color}44`;
-      } else {
-        btn.style.borderColor = 'transparent';
-        btn.style.backgroundColor = '';
-        btn.style.boxShadow = '';
-      }
-
-      btn.innerHTML = `
-        <span class="line-num" style="color: ${isSelected ? meta.color : 'inherit'}">${line}</span>
-        <span class="line-name">${isLightRail ? 'Pikaratikka' : 'Linja ' + line}</span>
-      `;
-
-      btn.addEventListener('click', () => {
-        toggleLineFilter(line);
-      });
-
-      grid.appendChild(btn);
-    });
-
-    updateFilterSummaryText();
+    // Legacy modal filter renderer stub
   }
 
   function applyFilterChanges() {
@@ -803,35 +769,6 @@
   // UI EVENT HANDLERS & HELPERS
   // =========================================================================
   function initUIEvents() {
-    // Filter Modal Controls
-    document.getElementById('btn-filter').addEventListener('click', openFilterModal);
-    document.getElementById('btn-close-filter').addEventListener('click', closeFilterModal);
-    document.getElementById('btn-apply-filter').addEventListener('click', applyFilterChanges);
-
-    document.getElementById('btn-select-all').addEventListener('click', () => {
-      state.activeFilters = new Set(CONFIG.DEFAULT_LINES);
-      renderFilterButtons();
-    });
-
-    document.getElementById('btn-select-main').addEventListener('click', () => {
-      state.activeFilters = new Set(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']);
-      renderFilterButtons();
-    });
-
-    document.getElementById('btn-select-lightrail').addEventListener('click', () => {
-      state.activeFilters = new Set(['15']);
-      renderFilterButtons();
-    });
-
-    document.getElementById('btn-clear-all').addEventListener('click', () => {
-      state.activeFilters = new Set(['1']); // Keep line 1 active minimum
-      renderFilterButtons();
-    });
-
-    // Close modal on background click
-    document.getElementById('filter-modal').addEventListener('click', (e) => {
-      if (e.target.id === 'filter-modal') closeFilterModal();
-    });
 
     // Drawer Controls
     document.getElementById('btn-close-drawer').addEventListener('click', deselectVehicle);
