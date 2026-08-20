@@ -110,6 +110,13 @@
     state.map.on('click', () => {
       deselectVehicle();
     });
+
+    window.addEventListener('resize', () => {
+      if (state.map) state.map.invalidateSize();
+    });
+    setTimeout(() => {
+      if (state.map) state.map.invalidateSize();
+    }, 400);
   }
 
   function updateZoomClass() {
@@ -1043,7 +1050,7 @@
 
     const metaAppleStatusBar = document.getElementById('meta-apple-status') || document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
     if (metaAppleStatusBar) {
-      metaAppleStatusBar.setAttribute('content', isLight ? 'default' : 'black-translucent');
+      metaAppleStatusBar.setAttribute('content', 'black-translucent');
     }
 
     const btnDark = document.getElementById('btn-theme-dark');
