@@ -1013,6 +1013,21 @@
       });
     });
 
+    // Drawer Controls
+    document.getElementById('btn-close-drawer')?.addEventListener('click', deselectVehicle);
+    document.getElementById('btn-track-tram')?.addEventListener('click', () => {
+      state.isFollowing = true;
+      if (state.selectedVehicleId) {
+        state.vehicles.forEach(v => {
+          if (v.id === state.selectedVehicleId) {
+            state.map.panTo([v.lat, v.lng], { animate: true });
+          }
+        });
+      }
+      const t = TRANSLATIONS[state.currentLang] || TRANSLATIONS.fi;
+      showToast(t.followingTram, 'info');
+    });
+
     // Locate user button
     document.getElementById('btn-locate').addEventListener('click', locateUser);
 
