@@ -26,11 +26,11 @@
     '1': { name: 'Eira – Käpylä', color: '#10b981' },       // Emerald Green
     '2': { name: 'Olympiaterminaali – Pasila', color: '#f97316' }, // Coral Orange
     '3': { name: 'Olympiaterminaali – Meilahti', color: '#f59e0b' }, // Amber Gold
-    '4': { name: 'Katajanokka – Munkkiniemi', color: '#a855f7' },   // Lavender Purple
+    '4': { name: 'Katajanokka – Munkkiniemi', color: '#84cc16' },   // Lime Green
     '5': { name: 'Katajanokan terminaali – Rautatientori', color: '#f43f5e' }, // Rose Pink
-    '6': { name: 'Hietalahti – Arabia', color: '#06b6d4' },      // Cyan Sky
-    '7': { name: 'Länsiterminaali – Meilahden sairaala', color: '#84cc16' }, // Lime Green
-    '8': { name: 'Jätkäsaari – Arabia', color: '#ec4899' },      // Magenta Pink
+    '6': { name: 'Hietalahti – Arabia', color: '#ec4899' },      // Magenta Pink
+    '7': { name: 'Länsiterminaali – Meilahden sairaala', color: '#a855f7' }, // Lavender Purple
+    '8': { name: 'Jätkäsaari – Arabia', color: '#06b6d4' },      // Cyan Sky
     '9': { name: 'Länsiterminaali – Ilmala', color: '#14b8a6' }, // Turquoise Teal
     '10': { name: 'Kirurgi – Pikku Huopalahti', color: '#6366f1' }, // Indigo Violet
     '13': { name: 'Kalasatama – Pasila', color: '#eab308' },     // Electric Yellow
