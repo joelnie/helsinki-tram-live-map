@@ -233,7 +233,44 @@
             fields: {
               id: { id: 1, type: "string" },
               isDeleted: { id: 2, type: "bool" },
-              vehicle: { id: 4, type: "VehiclePosition" }
+              vehicle: { id: 4, type: "VehiclePosition" },
+              alert: { id: 5, type: "Alert" }
+            }
+          },
+          Alert: {
+            fields: {
+              activePeriod: { rule: "repeated", id: 1, type: "TimeRange" },
+              informedEntity: { rule: "repeated", id: 5, type: "EntitySelector" },
+              cause: { id: 6, type: "int32" },
+              effect: { id: 7, type: "int32" },
+              url: { id: 8, type: "TranslatedString" },
+              headerText: { id: 10, type: "TranslatedString" },
+              descriptionText: { id: 11, type: "TranslatedString" }
+            }
+          },
+          TimeRange: {
+            fields: {
+              start: { id: 1, type: "uint64" },
+              end: { id: 2, type: "uint64" }
+            }
+          },
+          EntitySelector: {
+            fields: {
+              agencyId: { id: 1, type: "string" },
+              routeId: { id: 2, type: "string" },
+              routeType: { id: 3, type: "int32" },
+              stopId: { id: 4, type: "string" }
+            }
+          },
+          TranslatedString: {
+            fields: {
+              translation: { rule: "repeated", id: 1, type: "Translation" }
+            }
+          },
+          Translation: {
+            fields: {
+              text: { id: 1, type: "string" },
+              language: { id: 2, type: "string" }
             }
           },
           VehiclePosition: {
@@ -1204,8 +1241,14 @@
     const currentLang = state.currentLang;
 
     try {
-      const res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://realtime.hsl.fi/realtime/service-alerts/v2/hsl'));
-      if (res.ok) {
+      let res = null;
+      try {
+        res = await fetch('https://realtime.hsl.fi/realtime/service-alerts/v2/hsl');
+      } catch (e1) {
+        res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://realtime.hsl.fi/realtime/service-alerts/v2/hsl'));
+      }
+
+      if (res && res.ok) {
         const buffer = await res.arrayBuffer();
         const root = protobuf.Root.fromJSON(GTFS_RT_SCHEMA);
         const FeedMessage = root.lookupType('FeedMessage');
