@@ -96,9 +96,6 @@
     // Layer group for route track polylines
     state.routePolylineGroup = L.layerGroup().addTo(state.map);
 
-    // Custom Leaflet Zoom Control at top right
-    L.control.zoom({ position: 'topright' }).addTo(state.map);
-
     // Dynamic Zoom Scaling Listener
     state.map.on('zoomend zoom', updateZoomClass);
     updateZoomClass();
