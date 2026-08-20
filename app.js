@@ -21,20 +21,20 @@
     DEFAULT_LINES: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '13', '15']
   };
 
-  // Line Descriptions & Destinations mapping for display
+  // Line Descriptions, Destinations, & Distinct Color Palette for display
   const LINE_META = {
-    '1': { name: 'Eira – Käpylä', color: '#00985f' },
-    '2': { name: 'Olympiaterminaali – Pasila', color: '#00985f' },
-    '3': { name: 'Olympiaterminaali – Meilahti', color: '#00985f' },
-    '4': { name: 'Katajanokka – Munkkiniemi', color: '#00985f' },
-    '5': { name: 'Katajanokan terminaali – Rautatientori', color: '#00985f' },
-    '6': { name: 'Hietalahti – Arabia', color: '#00985f' },
-    '7': { name: 'Länsiterminaali – Meilahden sairaala', color: '#00985f' },
-    '8': { name: 'Jätkäsaari – Arabia', color: '#00985f' },
-    '9': { name: 'Länsiterminaali – Ilmala', color: '#00985f' },
-    '10': { name: 'Kirurgi – Pikku Huopalahti', color: '#00985f' },
-    '13': { name: 'Kalasatama – Pasila', color: '#00985f' },
-    '15': { name: 'Raide-Jokeri: Keilaniemi – Itäkeskus', color: '#007ac9', isLightRail: true }
+    '1': { name: 'Eira – Käpylä', color: '#10b981' },       // Emerald Green
+    '2': { name: 'Olympiaterminaali – Pasila', color: '#f97316' }, // Coral Orange
+    '3': { name: 'Olympiaterminaali – Meilahti', color: '#f59e0b' }, // Amber Gold
+    '4': { name: 'Katajanokka – Munkkiniemi', color: '#a855f7' },   // Lavender Purple
+    '5': { name: 'Katajanokan terminaali – Rautatientori', color: '#f43f5e' }, // Rose Pink
+    '6': { name: 'Hietalahti – Arabia', color: '#06b6d4' },      // Cyan Sky
+    '7': { name: 'Länsiterminaali – Meilahden sairaala', color: '#84cc16' }, // Lime Green
+    '8': { name: 'Jätkäsaari – Arabia', color: '#ec4899' },      // Magenta Pink
+    '9': { name: 'Länsiterminaali – Ilmala', color: '#14b8a6' }, // Turquoise Teal
+    '10': { name: 'Kirurgi – Pikku Huopalahti', color: '#6366f1' }, // Indigo Violet
+    '13': { name: 'Kalasatama – Pasila', color: '#eab308' },     // Electric Yellow
+    '15': { name: 'Raide-Jokeri: Keilaniemi – Itäkeskus', color: '#007ac9', isLightRail: true } // Raide-Jokeri Blue
   };
 
   // =========================================================================
@@ -127,15 +127,15 @@
       // Only render tracks for actively filtered tram lines
       if (state.activeFilters.has(lineKey)) {
         const segments = state.routeData[lineKey];
+        const meta = LINE_META[lineKey] || { color: '#10b981' };
         const isLightRail = lineKey === '15';
-        const color = isLightRail ? '#007ac9' : '#00985f';
-        const weight = isLightRail ? 4 : 3;
+        const weight = isLightRail ? 4.5 : 3.5;
 
         segments.forEach((seg) => {
           const polyline = L.polyline(seg, {
-            color: color,
+            color: meta.color,
             weight: weight,
-            opacity: 0.65,
+            opacity: 0.75,
             smoothFactor: 1.5,
             interactive: false
           });
@@ -456,13 +456,13 @@
 
   // Create Custom HTML Leaflet DivIcon for Tram
   function createTramMarker(data) {
-    const isLightRail = data.line === '15';
+    const meta = LINE_META[data.line] || { color: '#10b981' };
     const isSelected = state.selectedVehicleId === data.id;
 
     const iconHtml = `
       <div class="tram-marker-wrapper ${isSelected ? 'selected' : ''}" id="marker-${data.id}">
-        <div class="tram-direction-pointer ${isLightRail ? 'line-15' : ''}" style="transform: rotate(${data.heading}deg)"></div>
-        <div class="tram-marker-icon ${isLightRail ? 'line-15' : ''}">${data.rawLine}</div>
+        <div class="tram-direction-pointer" style="border-bottom-color: ${meta.color}; transform: rotate(${data.heading}deg)"></div>
+        <div class="tram-marker-icon" style="background-color: ${meta.color}; box-shadow: 0 4px 12px ${meta.color}77;">${data.rawLine}</div>
       </div>
     `;
 
@@ -533,11 +533,12 @@
   }
 
   function updateDrawerStats(veh) {
-    const meta = LINE_META[veh.line] || { name: `Tram Line ${veh.rawLine}`, color: '#00985f' };
+    const meta = LINE_META[veh.line] || { name: `Tram Line ${veh.rawLine}`, color: '#10b981' };
     const badgeEl = document.getElementById('drawer-line-badge');
     
     badgeEl.textContent = veh.rawLine;
-    badgeEl.className = `line-badge ${veh.line === '15' ? 'line-15' : ''}`;
+    badgeEl.style.backgroundColor = meta.color;
+    badgeEl.style.boxShadow = `0 4px 12px ${meta.color}66`;
 
     document.getElementById('drawer-title').textContent = `Tram Line ${veh.rawLine}`;
     document.getElementById('drawer-subtitle').textContent = meta.name;
@@ -599,19 +600,29 @@
     CONFIG.DEFAULT_LINES.forEach((line) => {
       const isSelected = state.activeFilters.has(line);
       const isLightRail = line === '15';
-      const meta = LINE_META[line];
+      const meta = LINE_META[line] || { color: '#10b981' };
 
       const btn = document.createElement('button');
-      btn.className = `line-toggle-btn ${isSelected ? 'active' : ''} ${isLightRail ? 'line-15' : ''}`;
+      btn.className = `line-toggle-btn ${isSelected ? 'active' : ''}`;
       btn.dataset.line = line;
+      
+      if (isSelected) {
+        btn.style.borderColor = meta.color;
+        btn.style.backgroundColor = meta.color + '22';
+        btn.style.boxShadow = `0 4px 12px ${meta.color}44`;
+      } else {
+        btn.style.borderColor = 'transparent';
+        btn.style.backgroundColor = '';
+        btn.style.boxShadow = '';
+      }
+
       btn.innerHTML = `
-        <span class="line-num">${line}</span>
+        <span class="line-num" style="color: ${isSelected ? meta.color : 'inherit'}">${line}</span>
         <span class="line-name">${isLightRail ? 'Raide-Jokeri' : 'Line ' + line}</span>
       `;
 
       btn.addEventListener('click', () => {
         if (state.activeFilters.has(line)) {
-          // Don't allow unselecting all lines completely
           if (state.activeFilters.size > 1) {
             state.activeFilters.delete(line);
           } else {
@@ -620,7 +631,19 @@
         } else {
           state.activeFilters.add(line);
         }
-        btn.classList.toggle('active', state.activeFilters.has(line));
+        const activeNow = state.activeFilters.has(line);
+        btn.classList.toggle('active', activeNow);
+        if (activeNow) {
+          btn.style.borderColor = meta.color;
+          btn.style.backgroundColor = meta.color + '22';
+          btn.style.boxShadow = `0 4px 12px ${meta.color}44`;
+          btn.querySelector('.line-num').style.color = meta.color;
+        } else {
+          btn.style.borderColor = 'transparent';
+          btn.style.backgroundColor = '';
+          btn.style.boxShadow = '';
+          btn.querySelector('.line-num').style.color = 'inherit';
+        }
         updateFilterSummaryText();
       });
 
