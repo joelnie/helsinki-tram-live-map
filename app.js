@@ -891,11 +891,11 @@
     document.getElementById('lbl-theme').textContent = t.theme;
     document.getElementById('lbl-palette').textContent = t.colorPalette;
 
-    document.getElementById('btn-lang-fi').textContent = '🇫🇮 Suomi';
-    document.getElementById('btn-lang-en').textContent = '🇬🇧 English';
+    document.getElementById('btn-lang-fi').textContent = 'Suomi';
+    document.getElementById('btn-lang-en').textContent = 'English';
 
-    document.getElementById('btn-theme-dark').textContent = `🌙 ${t.darkTheme}`;
-    document.getElementById('btn-theme-light').textContent = `☀️ ${t.lightTheme}`;
+    document.getElementById('btn-theme-dark').textContent = t.darkTheme;
+    document.getElementById('btn-theme-light').textContent = t.lightTheme;
 
     document.getElementById('btn-lang-fi').classList.toggle('active', lang === 'fi');
     document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
