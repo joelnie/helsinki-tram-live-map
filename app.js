@@ -521,7 +521,7 @@
 
     const iconHtml = `
       <div class="tram-marker-wrapper ${isSelected ? 'selected' : ''}" id="marker-${data.id}">
-        <div class="tram-direction-pointer" style="border-bottom-color: ${meta.color}; transform: rotate(${data.heading}deg) translateY(-20px)"></div>
+        <div class="tram-direction-pointer" style="transform: rotate(${data.heading}deg) translateY(-20px)"></div>
         <div class="tram-marker-icon" style="background-color: ${meta.color}; box-shadow: 0 4px 12px ${meta.color}77;">${data.rawLine}</div>
       </div>
     `;
