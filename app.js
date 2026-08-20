@@ -922,7 +922,7 @@
       dataSource: "Lähde: HSL Avoin Data",
       pwaTitle: "Asenna Spora-Live",
       pwaDesc: "Paina ⎋ Jaa, ja valitse Lisää kotivalikkoon.",
-      disturbancesTitle: "Häiriötiedotteet",
+      disturbancesTitle: "Poikkeustiedotteet",
       noDisturbances: "Ei aktiivisia häiriöitä"
     },
     en: {
