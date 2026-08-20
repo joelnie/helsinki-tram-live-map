@@ -653,12 +653,7 @@
 
   function toggleLineFilter(line) {
     if (state.activeFilters.has(line)) {
-      if (state.activeFilters.size > 1) {
-        state.activeFilters.delete(line);
-      } else {
-        showToast('Vähintään yksi linja täytyy olla valittuna', 'warn');
-        return;
-      }
+      state.activeFilters.delete(line);
     } else {
       state.activeFilters.add(line);
     }
