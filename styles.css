@@ -899,8 +899,8 @@ body.light-theme .palette-option-btn {
    ========================================================================== */
 .disturbance-container {
   position: absolute;
-  bottom: 60px;
-  left: 14px;
+  bottom: 76px;
+  left: 24px;
   z-index: 1050;
   display: flex;
   flex-direction: column;
