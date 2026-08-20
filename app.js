@@ -18,7 +18,7 @@
     GTFS_RT_HTTP_URL: 'https://realtime.hsl.fi/realtime/vehicle-positions/v2/hsl',
     GTFS_RT_POLL_INTERVAL: 7000, // ms
     STALE_THRESHOLD_MS: 180000,   // 3 minutes
-    DEFAULT_LINES: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '13', '15']
+    DEFAULT_LINES: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '13', '15', 'H']
   };
 
   // Line Descriptions, Destinations, & Distinct Color Palette for display
@@ -34,7 +34,8 @@
     '9': { name: { fi: 'Länsiterminaali – Ilmala', en: 'West Terminal – Ilmala' }, color: '#14b8a6' },
     '10': { name: { fi: 'Kirurgi – Pikku Huopalahti', en: 'Surgical Hospital – Pikku Huopalahti' }, color: '#6366f1' },
     '13': { name: { fi: 'Kalasatama – Pasila', en: 'Kalasatama – Pasila' }, color: '#eab308' },
-    '15': { name: { fi: 'Raide-Jokeri: Keilaniemi – Itäkeskus', en: 'Light Rail 15: Keilaniemi – Itäkeskus' }, color: '#007ac9', isLightRail: true }
+    '15': { name: { fi: 'Raide-Jokeri: Keilaniemi – Itäkeskus', en: 'Light Rail 15: Keilaniemi – Itäkeskus' }, color: '#007ac9', isLightRail: true },
+    'H': { name: { fi: 'Siirtoajo / Halliajo', en: 'Depot Transfer / Halliajo' }, color: '#64748b' }
   };
 
   // State Management
@@ -558,6 +559,7 @@
       }
 
       state.vehicles.set(data.key, vehObj);
+      if (data.line === 'H') renderCircleFilterBar();
     }
 
     updateTramCounterUI();
@@ -766,7 +768,13 @@
     const borderColor = isPale ? '#1e293b' : '#ffffff';
     const t = TRANSLATIONS[state.currentLang] || TRANSLATIONS.fi;
 
-    CONFIG.DEFAULT_LINES.forEach((line) => {
+    const hasActiveH = Array.from(state.vehicles.values()).some(v => v.line === 'H');
+    const linesToRender = CONFIG.DEFAULT_LINES.filter(line => {
+      if (line === 'H') return hasActiveH;
+      return true;
+    });
+
+    linesToRender.forEach((line) => {
       const mode = state.lineModes.get(line) || 'both';
       const meta = LINE_META[line] || { color: '#10b981' };
 
@@ -874,27 +882,27 @@
     default: {
       '1': '#10b981', '2': '#2563eb', '3': '#f59e0b', '4': '#84cc16',
       '5': '#f43f5e', '6': '#ec4899', '7': '#a855f7', '8': '#dc2626',
-      '9': '#14b8a6', '10': '#6366f1', '13': '#eab308', '15': '#007ac9'
+      '9': '#14b8a6', '10': '#6366f1', '13': '#eab308', '15': '#007ac9', 'H': '#64748b'
     },
     rainbow: {
       '1': '#ff0055', '2': '#ff5500', '3': '#ffaa00', '4': '#aaff00',
       '5': '#00ff66', '6': '#00ffcc', '7': '#0099ff', '8': '#3333ff',
-      '9': '#8800ff', '10': '#ff00ff', '13': '#ff00aa', '15': '#00e5ff'
+      '9': '#8800ff', '10': '#ff00ff', '13': '#ff00aa', '15': '#00e5ff', 'H': '#71717a'
     },
     pale: {
       '1': '#a7f3d0', '2': '#fed7aa', '3': '#fef08a', '4': '#d9f99d',
       '5': '#fecdd3', '6': '#fbcfe8', '7': '#e9d5ff', '8': '#cff4fc',
-      '9': '#ccfbf1', '10': '#c7d2fe', '13': '#fef08a', '15': '#bae6fd'
+      '9': '#ccfbf1', '10': '#c7d2fe', '13': '#fef08a', '15': '#bae6fd', 'H': '#94a3b8'
     },
     hsl: {
       '1': '#007348', '2': '#007348', '3': '#007348', '4': '#007348',
       '5': '#007348', '6': '#007348', '7': '#007348', '8': '#007348',
-      '9': '#007348', '10': '#007348', '13': '#007348', '15': '#007ac9'
+      '9': '#007348', '10': '#007348', '13': '#007348', '15': '#007ac9', 'H': '#64748b'
     },
     dark: {
       '1': '#18181b', '2': '#18181b', '3': '#18181b', '4': '#18181b',
       '5': '#18181b', '6': '#18181b', '7': '#18181b', '8': '#18181b',
-      '9': '#18181b', '10': '#18181b', '13': '#18181b', '15': '#18181b'
+      '9': '#18181b', '10': '#18181b', '13': '#18181b', '15': '#18181b', 'H': '#3f3f46'
     }
   };
 
