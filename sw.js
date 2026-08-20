@@ -1,9 +1,9 @@
 /**
  * HELSINKI TRAM TRACKER PWA - SERVICE WORKER
- * Caches static shell assets and CDN dependencies for fast loading & offline capability.
+ * Caches static shell assets with Network-First strategy for live code updates.
  */
 
-const CACHE_NAME = 'helsinki-tram-v1.0.0';
+const CACHE_NAME = 'helsinki-tram-v1.0.8';
 
 // Assets to pre-cache on service worker installation
 const STATIC_ASSETS = [
@@ -11,35 +11,27 @@ const STATIC_ASSETS = [
   'index.html',
   'styles.css',
   'app.js',
-  'sw.js',
   'manifest.json',
   'routes.json',
   'stops.json',
   'favicon.ico',
   'icons/icon-192.png',
   'icons/icon-512.png',
-  'icons/apple-touch-icon.png',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-  'https://unpkg.com/mqtt@5.3.4/dist/mqtt.min.js',
-  'https://cdn.jsdelivr.net/npm/protobufjs@7.2.5/dist/protobuf.min.js',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap'
+  'icons/apple-touch-icon.png'
 ];
 
-// Install Event
+// Install Event - Force immediate activation
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Pre-caching application shell assets');
-      return cache.addAll(STATIC_ASSETS).catch(err => {
-        console.warn('[SW] Pre-cache warning:', err);
-      });
+      console.log('[SW] Pre-caching v1.0.8 application shell');
+      return cache.addAll(STATIC_ASSETS).catch(err => console.warn('[SW] Pre-cache warning:', err));
     })
   );
 });
 
-// Activate Event - Cache Cleanup
+// Activate Event - Purge all old caches immediately & claim clients
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -55,7 +47,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch Event - Routing & Caching Strategy
+// Fetch Event - Network-First for JS/CSS/HTML so updates are instantaneous
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
@@ -65,37 +57,14 @@ self.addEventListener('fetch', (event) => {
       url.hostname.includes('realtime.hsl.fi') ||
       url.protocol === 'wss:' || 
       url.protocol === 'ws:') {
-    return; // Pass through to network
-  }
-
-  // 2. Stale-while-revalidate for Map Tiles (CartoDB / OpenStreetMap)
-  if (url.hostname.includes('basemaps.cartocdn.com') || url.hostname.includes('tile.openstreetmap.org')) {
-    event.respondWith(
-      caches.open('map-tiles-cache').then((cache) => {
-        return cache.match(event.request).then((cachedResponse) => {
-          const fetchPromise = fetch(event.request).then((networkResponse) => {
-            if (networkResponse.status === 200) {
-              cache.put(event.request, networkResponse.clone());
-            }
-            return networkResponse;
-          }).catch(() => cachedResponse);
-
-          return cachedResponse || fetchPromise;
-        });
-      })
-    );
     return;
   }
 
-  // 3. Cache-First Strategy for App Shell & Static CDNs
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then((networkResponse) => {
-        // Cache valid responses
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+  // 2. Network-First Strategy for App Shell (HTML, JS, CSS)
+  if (event.request.mode === 'navigate' || url.pathname.endsWith('.js') || url.pathname.endsWith('.css') || url.pathname.endsWith('index.html') || url.pathname === '/' || url.pathname.endsWith('/')) {
+    event.respondWith(
+      fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
@@ -103,11 +72,23 @@ self.addEventListener('fetch', (event) => {
         }
         return networkResponse;
       }).catch(() => {
-        // Offline fallback
-        if (event.request.headers.get('accept').includes('text/html')) {
-          return caches.match('index.html');
+        return caches.match(event.request);
+      })
+    );
+    return;
+  }
+
+  // 3. Cache-First Strategy for Static CDN assets & icons
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) return cachedResponse;
+      return fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
         }
-      });
+        return networkResponse;
+      }).catch(() => caches.match('index.html'));
     })
   );
 });
