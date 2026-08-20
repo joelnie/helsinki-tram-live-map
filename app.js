@@ -928,7 +928,7 @@
       followingTram: "Seurataan vaunua kartalla",
       dataSource: "Lähde: HSL Avoin Data",
       pwaTitle: "Asenna Spora-Live",
-      pwaDesc: "Paina ⎋ Jaa, ja valitse Lisää kotivalikkoon.",
+      pwaDesc: "Paina ⎋ Jaa, ja valitse Lisää kotivalikkoon. Valitse 'Avaa verkkoappina'.",
       disturbancesTitle: "Poikkeustiedotteet",
       noDisturbances: "Ei aktiivisia häiriöitä"
     },
@@ -961,7 +961,7 @@
       followingTram: "Following tram on map",
       dataSource: "Source: HSL Open Data",
       pwaTitle: "Install Spora-Live",
-      pwaDesc: "Tap ⎋ Share, then select Add to Home Screen.",
+      pwaDesc: "Tap ⎋ Share, then select Add to Home Screen. Select 'Open as Web App'.",
       disturbancesTitle: "Service Disturbances",
       noDisturbances: "No active disturbances"
     }
