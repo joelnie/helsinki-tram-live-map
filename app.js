@@ -1296,22 +1296,6 @@
       console.warn('GTFS-RT alerts fetch error:', e);
     }
 
-    // Include major vehicle delays (> 3 min)
-    state.vehicles.forEach((veh) => {
-      if (veh.delay > 180) {
-        const min = Math.round(veh.delay / 60);
-        const itemKey = `delay_${veh.line}_${veh.id}`;
-        if (!seenTitles.has(itemKey)) {
-          seenTitles.add(itemKey);
-          items.push({
-            title: `${t.linePrefix} ${veh.rawLine} (#${veh.id})`,
-            desc: `+${min} min ${t.delayed}`,
-            lines: [veh.line]
-          });
-        }
-      }
-    });
-
     state.disturbances = items;
     updateDisturbanceUI(items, t);
   }
