@@ -99,10 +99,28 @@
     // Custom Leaflet Zoom Control at top right
     L.control.zoom({ position: 'topright' }).addTo(state.map);
 
+    // Dynamic Zoom Scaling Listener
+    state.map.on('zoomend zoom', updateZoomClass);
+    updateZoomClass();
+
     // Map click clears selection
     state.map.on('click', () => {
       deselectVehicle();
     });
+  }
+
+  function updateZoomClass() {
+    const mapEl = document.getElementById('map');
+    if (!mapEl || !state.map) return;
+    const zoom = state.map.getZoom();
+    mapEl.classList.remove('zoom-low', 'zoom-mid', 'zoom-high');
+    if (zoom <= 12) {
+      mapEl.classList.add('zoom-low');
+    } else if (zoom <= 14) {
+      mapEl.classList.add('zoom-mid');
+    } else {
+      mapEl.classList.add('zoom-high');
+    }
   }
 
   // Load static track geometries from routes.json
@@ -200,12 +218,12 @@
   // REAL-TIME DATA ENGINE (MQTT & GTFS-RT FALLBACK)
   // =========================================================================
   function startRealtimeEngine() {
-    updateConnectionStatus('connecting', 'Connecting to HSL...');
+    updateConnectionStatus('connecting', 'Yhdistetään...');
     
     // Set a 6-second timeout: if MQTT doesn't receive data, fallback to GTFS-RT HTTP polling
     state.mqttTimeoutTimer = setTimeout(() => {
       if (!state.lastMsgTimestamp && state.connectionMode !== 'gtfs-rt') {
-        showToast('WebSocket delayed. Switching to GTFS-RT polling...', 'warn');
+        showToast('Yhteys viivästyy. Siirrytään GTFS-RT-päivitykseen...', 'warn');
         initGtfsRtPolling();
       }
     }, 6000);
@@ -234,7 +252,7 @@
 
       state.mqttClient.on('connect', () => {
         console.log('Connected to HSL MQTT broker via WSS!');
-        updateConnectionStatus('live', 'Live (MQTT)');
+        updateConnectionStatus('live', 'Reaaliaika');
         
         state.mqttClient.subscribe(CONFIG.MQTT_TOPIC, (err) => {
           if (err) {
@@ -394,63 +412,14 @@
                 fields: {
                   latitude: { id: 1, type: "float" },
                   longitude: { id: 2, type: "float" },
-                  bearing: { id: 3, type: "float" },
-                  speed: { id: 4, type: "float" }
-                }
-              },
-              VehicleDescriptor: { fields: { id: { id: 1, type: "string" }, label: { id: 2, type: "string" } } }
-            }
-          }
-        }
-      });
-
-      const FeedMessage = root.lookupType("transit_realtime.FeedMessage");
-      const message = FeedMessage.decode(new Uint8Array(buffer));
-      
-      if (message.entity) {
-        message.entity.forEach(e => {
-          if (e.vehicle && e.vehicle.position) {
-            const vp = e.vehicle;
-            const routeId = vp.trip ? vp.trip.routeId : '';
-            const lineKey = normalizeLineKey(routeId);
-            
-            // Only process tram lines (1-10, 15)
-            if (state.activeFilters.has(lineKey) || CONFIG.DEFAULT_LINES.includes(lineKey)) {
-              const vehId = vp.vehicle ? (vp.vehicle.id || vp.vehicle.label) : e.id;
-              const vehicleData = {
-                id: vehId,
-                key: `veh_${vehId}`,
-                line: lineKey,
-                rawLine: lineKey,
-                lat: vp.position.latitude,
-                lng: vp.position.longitude,
-                heading: vp.position.bearing || 0,
-                speed: vp.position.speed ? Math.round(vp.position.speed * 3.6) : 0,
-                delay: 0,
-                dir: '1',
-                lastUpdated: Date.now()
-              };
-              updateVehicleOnMap(vehicleData);
-            }
-          }
-        });
-      }
-    } catch (e) {
-      console.warn('Protobuf decode error:', e);
-    }
-  }
-
   // =========================================================================
   // VEHICLE MARKER & MAP RENDERER
   // =========================================================================
   function updateVehicleOnMap(data) {
-    // Check if line is filtered out
-    const isVisible = state.activeFilters.has(data.line);
-
-    let existing = state.vehicles.get(data.key);
+    const isFiltered = state.activeFilters.has(data.line);
+    const existing = state.vehicles.get(data.key);
 
     if (existing) {
-      // Update existing vehicle
       existing.lat = data.lat;
       existing.lng = data.lng;
       existing.heading = data.heading;
@@ -459,43 +428,25 @@
       existing.lastUpdated = data.lastUpdated;
 
       if (existing.marker) {
-        // Smoothly animate marker location
         existing.marker.setLatLng([data.lat, data.lng]);
         
-        // Rotate direction pointer
-        const pointerEl = existing.marker.getElement()?.querySelector('.tram-direction-pointer');
-        if (pointerEl) {
-          pointerEl.style.transform = `rotate(${data.heading}deg)`;
-        }
-
-        // Toggle visibility based on active filter
-        if (isVisible) {
-          if (!state.map.hasLayer(existing.marker)) {
-            existing.marker.addTo(state.map);
-          }
-        } else {
-          if (state.map.hasLayer(existing.marker)) {
-            state.map.removeLayer(existing.marker);
-          }
+        const wrapper = document.getElementById(`marker-${data.id}`);
+        if (wrapper) {
+          const pointer = wrapper.querySelector('.tram-direction-pointer');
+          if (pointer) pointer.style.transform = `rotate(${data.heading}deg)`;
         }
       }
 
-      // If this vehicle is currently selected and follow mode is active, center map
       if (state.selectedVehicleId === data.id && state.isFollowing) {
-        state.map.panTo([data.lat, data.lng], { animate: true, duration: 0.5 });
+        state.map.panTo([data.lat, data.lng], { animate: true });
         updateDrawerStats(existing);
       }
 
     } else {
-      // Create new vehicle entry
       const marker = createTramMarker(data);
+      const vehObj = { ...data, marker: marker };
 
-      const vehObj = {
-        ...data,
-        marker: marker
-      };
-
-      if (isVisible) {
+      if (isFiltered) {
         marker.addTo(state.map);
       }
 
@@ -552,7 +503,6 @@
   // VEHICLE DETAIL DRAWER & SELECTION
   // =========================================================================
   function selectVehicle(vehId) {
-    // Find vehicle by ID
     let foundVeh = null;
     state.vehicles.forEach((v) => {
       if (v.id === vehId) foundVeh = v;
@@ -563,15 +513,12 @@
     state.selectedVehicleId = vehId;
     state.isFollowing = true;
 
-    // Highlight selected marker
     document.querySelectorAll('.tram-marker-wrapper').forEach(el => el.classList.remove('selected'));
     const markerEl = document.getElementById(`marker-${vehId}`);
     if (markerEl) markerEl.classList.add('selected');
 
-    // Pan map to vehicle
     state.map.panTo([foundVeh.lat, foundVeh.lng], { animate: true, duration: 0.6 });
 
-    // Open detail drawer
     updateDrawerStats(foundVeh);
     document.getElementById('detail-drawer').classList.remove('hidden');
   }
@@ -584,38 +531,41 @@
   }
 
   function updateDrawerStats(veh) {
-    const meta = LINE_META[veh.line] || { name: `Tram Line ${veh.rawLine}`, color: '#10b981' };
+    const meta = LINE_META[veh.line] || { name: `Raitiolinja ${veh.rawLine}`, color: '#10b981' };
     const badgeEl = document.getElementById('drawer-line-badge');
     
     badgeEl.textContent = veh.rawLine;
     badgeEl.style.backgroundColor = meta.color;
     badgeEl.style.boxShadow = `0 4px 12px ${meta.color}66`;
 
-    document.getElementById('drawer-title').textContent = `Tram Line ${veh.rawLine}`;
+    document.getElementById('drawer-title').textContent = `Linja ${veh.rawLine}`;
     document.getElementById('drawer-subtitle').textContent = meta.name;
     document.getElementById('stat-speed').innerHTML = `${veh.speed} <small>km/h</small>`;
 
     // Format Delay
     const delayEl = document.getElementById('stat-delay');
     if (Math.abs(veh.delay) <= 15) {
-      delayEl.textContent = 'On time';
+      delayEl.textContent = 'Aikataulussa';
       delayEl.className = 'stat-value status-on-time';
     } else if (veh.delay > 15) {
       const min = Math.round(veh.delay / 60);
-      delayEl.textContent = `+${min > 0 ? min + ' min' : veh.delay + 's'} delay`;
+      delayEl.textContent = `+${min > 0 ? min + ' min' : veh.delay + 's'} myöhässä`;
       delayEl.className = 'stat-value status-delayed';
     } else {
       const min = Math.abs(Math.round(veh.delay / 60));
-      delayEl.textContent = `-${min > 0 ? min + ' min' : Math.abs(veh.delay) + 's'} early`;
+      delayEl.textContent = `-${min > 0 ? min + ' min' : Math.abs(veh.delay) + 's'} etuajassa`;
       delayEl.className = 'stat-value status-early';
     }
 
     document.getElementById('stat-veh').textContent = `#${veh.id}`;
     document.getElementById('stat-hdg').textContent = `${veh.heading}° ${getCompassHeading(veh.heading)}`;
+
+    const lastSeenSec = Math.floor((Date.now() - veh.lastUpdated) / 1000);
+    document.getElementById('drawer-last-seen').textContent = `Päivitetty: ${lastSeenSec < 3 ? 'äsken' : lastSeenSec + ' s sitten'}`;
   }
 
   function getCompassHeading(deg) {
-    const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    const directions = ['Pohjoinen (P)', 'Koillinen (KO)', 'Itä (I)', 'Kaakko (KA)', 'Etelä (E)', 'Lounas (LO)', 'Länsi (L)', 'Luode (LU)'];
     const idx = Math.round(deg / 45) % 8;
     return directions[idx];
   }
@@ -624,7 +574,6 @@
   // TRAM LINE FILTER SYSTEM
   // =========================================================================
   function initFilters() {
-    // Load saved filters or default to all
     const saved = localStorage.getItem('tram_active_filters');
     if (saved) {
       try {
@@ -669,7 +618,7 @@
 
       btn.innerHTML = `
         <span class="line-num" style="color: ${isSelected ? meta.color : 'inherit'}">${line}</span>
-        <span class="line-name">${isLightRail ? 'Raide-Jokeri' : 'Line ' + line}</span>
+        <span class="line-name">${isLightRail ? 'Pikaratikka' : 'Linja ' + line}</span>
       `;
 
       btn.addEventListener('click', () => {
@@ -677,7 +626,7 @@
           if (state.activeFilters.size > 1) {
             state.activeFilters.delete(line);
           } else {
-            showToast('At least one tram line must remain selected', 'warn');
+            showToast('Vähintään yksi linja täytyy olla valittuna', 'warn');
           }
         } else {
           state.activeFilters.add(line);
@@ -731,7 +680,7 @@
 
     updateTramCounterUI();
     closeFilterModal();
-    showToast(`Filter applied (${state.activeFilters.size} routes active)`, 'info');
+    showToast(`Suodatus käytössä (${state.activeFilters.size} linjaa valittuna)`, 'info');
   }
 
   function updateFilterSummaryText() {
@@ -739,10 +688,10 @@
     const badge = document.getElementById('filter-badge');
 
     if (state.activeFilters.size === CONFIG.DEFAULT_LINES.length) {
-      summary.textContent = 'Showing all tram lines';
+      summary.textContent = 'Näytetään kaikki linjat';
       badge.classList.add('hidden');
     } else {
-      summary.textContent = `Showing ${state.activeFilters.size} of ${CONFIG.DEFAULT_LINES.length} lines`;
+      summary.textContent = `Näytetään ${state.activeFilters.size} / ${CONFIG.DEFAULT_LINES.length} linjaa`;
       badge.textContent = state.activeFilters.size;
       badge.classList.remove('hidden');
     }
@@ -793,7 +742,7 @@
           }
         });
       }
-      showToast('Following tram on map', 'info');
+      showToast('Seurataan vaunua kartalla', 'info');
     });
 
     // Recenter & Locate buttons
@@ -822,11 +771,11 @@
 
   function locateUser() {
     if (!navigator.geolocation) {
-      showToast('Geolocation not supported by browser', 'warn');
+      showToast('Selain ei tue sijaintipalvelua', 'warn');
       return;
     }
 
-    showToast('Locating your position...', 'info');
+    showToast('Haetaan omaa sijaintia...', 'info');
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -846,7 +795,7 @@
         state.map.flyTo([latitude, longitude], 15, { duration: 1 });
       },
       (err) => {
-        showToast('Unable to fetch location', 'warn');
+        showToast('Sijainnin hakeminen epäonnistui', 'warn');
       },
       { enableHighAccuracy: true, timeout: 8000 }
     );
@@ -873,15 +822,15 @@
   function updateLastSeenUI() {
     const el = document.getElementById('last-update-time');
     if (!state.lastMsgTimestamp) {
-      el.textContent = 'Connecting...';
+      el.textContent = 'Yhdistetään...';
       return;
     }
 
     const secAgo = Math.floor((Date.now() - state.lastMsgTimestamp) / 1000);
     if (secAgo < 3) {
-      el.textContent = 'Updated just now';
+      el.textContent = 'Päivitetty äsken';
     } else {
-      el.textContent = `Updated ${secAgo}s ago`;
+      el.textContent = `Päivitetty ${secAgo} s sitten`;
     }
   }
 

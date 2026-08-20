@@ -1,7 +1,7 @@
 {
-  "name": "Helsinki Tram Live Tracker",
-  "short_name": "Tram Tracker",
-  "description": "Real-time live positioning map of Helsinki trams and Light Rail Line 15.",
+  "name": "Helsinki Ratikka Live",
+  "short_name": "Ratikat",
+  "description": "Helsingin raitiovaunujen ja Raide-Jokerin reaaliaikainen karttapalvelu.",
   "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",
