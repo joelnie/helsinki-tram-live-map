@@ -1312,6 +1312,24 @@
                 });
               }
 
+              // Filter alerts to ONLY include those active today or tomorrow
+              const now = new Date();
+              const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+              const tomorrowEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 23, 59, 59, 999);
+              const windowStartSec = Math.floor(todayStart.getTime() / 1000);
+              const windowEndSec = Math.floor(tomorrowEnd.getTime() / 1000);
+
+              let isActiveInWindow = true;
+              if (a.activePeriod && Array.isArray(a.activePeriod) && a.activePeriod.length > 0) {
+                isActiveInWindow = a.activePeriod.some((period) => {
+                  const pStart = (period.start && Number(period.start) > 0) ? Number(period.start) : 0;
+                  const pEnd = (period.end && Number(period.end) > 0) ? Number(period.end) : Infinity;
+                  return pStart <= windowEndSec && pEnd >= windowStartSec;
+                });
+              }
+
+              if (!isActiveInWindow) return;
+
               // Include alert if it pertains to tram lines or mentions tram keywords
               const isTramAlert = lines.length > 0 || /(?:ratik|tram|spårvagn|raitiovaunu)/i.test(fullText);
               if (!isTramAlert) return;
