@@ -1430,14 +1430,11 @@
 
   // Check iOS PWA Banner display condition
   function checkIosPwaBanner() {
-    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
-    const isDismissed = localStorage.getItem('pwa_banner_dismissed') === 'true';
-
-    if (isIos && !isStandalone && !isDismissed) {
+    if (!isStandalone) {
       setTimeout(() => {
-        document.getElementById('ios-pwa-banner').classList.remove('hidden');
-      }, 2000);
+        document.getElementById('ios-pwa-banner')?.classList.remove('hidden');
+      }, 500);
     }
   }
 
