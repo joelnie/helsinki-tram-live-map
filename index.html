@@ -112,16 +112,27 @@
         <button id="btn-clear-all" class="btn-chip btn-chip-secondary">Clear All</button>
       </div>
 
-      <!-- Route Tracks Toggle Option -->
+      <!-- Route Tracks & Stops Toggle Options -->
       <div class="track-toggle-row">
         <label class="toggle-label" for="toggle-tracks">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
             <line x1="4" y1="22" x2="4" y2="15"></line>
           </svg>
-          Show Tram Route Tracks on Map
+          Show Tram Route Tracks
         </label>
         <input type="checkbox" id="toggle-tracks" class="toggle-checkbox" checked>
+      </div>
+
+      <div class="track-toggle-row">
+        <label class="toggle-label" for="toggle-stops">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="4" y="4" width="16" height="16" rx="3" ry="3"></rect>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          Show Tram Stops (Stations)
+        </label>
+        <input type="checkbox" id="toggle-stops" class="toggle-checkbox" checked>
       </div>
 
       <div id="line-grid" class="line-grid">

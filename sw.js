@@ -14,6 +14,7 @@ const STATIC_ASSETS = [
   'sw.js',
   'manifest.json',
   'routes.json',
+  'stops.json',
   'favicon.ico',
   'icons/icon-192.png',
   'icons/icon-512.png',

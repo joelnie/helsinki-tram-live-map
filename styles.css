@@ -884,3 +884,47 @@ html, body {
   transform: scale(1.15);
   box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.8), 0 6px 16px rgba(0, 0, 0, 0.5);
 }
+
+/* ==========================================================================
+   TRAM STOP / STATION RECTANGULAR MARKERS
+   ========================================================================== */
+.tram-stop-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.tram-stop-rect {
+  width: 10px;
+  height: 6px;
+  border-radius: 2px;
+  background: #1e293b;
+  border: 1px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.tram-stop-wrapper:hover .tram-stop-rect {
+  transform: scale(1.6);
+  background: var(--color-hsl-green);
+  border-color: #ffffff;
+}
+
+/* Tooltip Popup for Stop Names */
+.stop-name-tooltip {
+  background: rgba(15, 23, 42, 0.92) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #f8fafc !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 4px 8px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.stop-name-tooltip::before {
+  border-top-color: rgba(15, 23, 42, 0.92) !important;
+}

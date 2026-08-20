@@ -46,8 +46,11 @@
     vehicles: new Map(), // vehicle_key -> vehicle object
     activeFilters: new Set(),
     showRouteTracks: true,
+    showStops: true,
     routeData: null,
+    stopsData: null,
     routePolylineGroup: null,
+    stopMarkerGroup: null,
     selectedVehicleId: null,
     isFollowing: false,
     mqttClient: null,
@@ -67,6 +70,7 @@
     initUIEvents();
     checkIosPwaBanner();
     loadRouteData();
+    loadStopsData();
     startRealtimeEngine();
     
     // Periodically remove vehicles with stale signals
@@ -95,6 +99,8 @@
 
     // Layer group for route track polylines
     state.routePolylineGroup = L.layerGroup().addTo(state.map);
+    // Layer group for station stop markers
+    state.stopMarkerGroup = L.layerGroup().addTo(state.map);
 
     // Custom Leaflet Zoom Control at top right
     L.control.zoom({ position: 'topright' }).addTo(state.map);
@@ -115,6 +121,42 @@
     } catch (e) {
       console.warn('Could not load routes.json:', e);
     }
+  }
+
+  // Load static station stops from stops.json
+  async function loadStopsData() {
+    try {
+      const response = await fetch('stops.json');
+      if (!response.ok) return;
+      state.stopsData = await response.json();
+      renderStops();
+    } catch (e) {
+      console.warn('Could not load stops.json:', e);
+    }
+  }
+
+  function renderStops() {
+    if (!state.stopMarkerGroup) return;
+    state.stopMarkerGroup.clearLayers();
+
+    if (!state.showStops || !state.stopsData) return;
+
+    const stopIcon = L.divIcon({
+      html: `<div class="tram-stop-wrapper" title="Tram Stop"><div class="tram-stop-rect"></div></div>`,
+      className: 'tram-stop-leaflet-icon',
+      iconSize: [12, 8],
+      iconAnchor: [6, 4]
+    });
+
+    state.stopsData.forEach((stop) => {
+      const marker = L.marker([stop.lat, stop.lng], { icon: stopIcon });
+      marker.bindTooltip(`🚏 ${stop.name}`, {
+        className: 'stop-name-tooltip',
+        direction: 'top',
+        offset: [0, -4]
+      });
+      state.stopMarkerGroup.addLayer(marker);
+    });
   }
 
   // Parallel offset algorithm to render overlapping route tracks side-by-side
@@ -705,14 +747,20 @@
   }
 
   function applyFilterChanges() {
-    const toggleCb = document.getElementById('toggle-tracks');
-    if (toggleCb) {
-      state.showRouteTracks = toggleCb.checked;
+    const toggleTracksCb = document.getElementById('toggle-tracks');
+    if (toggleTracksCb) {
+      state.showRouteTracks = toggleTracksCb.checked;
+    }
+
+    const toggleStopsCb = document.getElementById('toggle-stops');
+    if (toggleStopsCb) {
+      state.showStops = toggleStopsCb.checked;
     }
 
     // Save to localStorage
     localStorage.setItem('tram_active_filters', JSON.stringify(Array.from(state.activeFilters)));
     localStorage.setItem('tram_show_tracks', String(state.showRouteTracks));
+    localStorage.setItem('tram_show_stops', String(state.showStops));
 
     // Refresh vehicle markers on map
     state.vehicles.forEach((veh) => {
@@ -726,8 +774,9 @@
       }
     });
 
-    // Refresh route track lines on map
+    // Refresh route track lines and stop markers on map
     renderRouteTracks();
+    renderStops();
 
     updateTramCounterUI();
     closeFilterModal();
