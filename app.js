@@ -401,12 +401,16 @@
 
   // Handle HFP v2 VP (Vehicle Position) payload
   function handleHfpVehiclePosition(vp) {
-    if (!vp.lat || !vp.long || !vp.desi) return;
+    if (!vp.lat || !vp.long) return;
 
-    let rawLine = String(vp.desi || '').trim();
-    const isH = rawLine.toUpperCase().includes('H') || (vp.headsign && String(vp.headsign).toUpperCase().includes('HALLI')) || (vp.route && String(vp.route).toUpperCase().includes('H'));
-    if (isH) rawLine = 'H';
-    const lineKey = normalizeLineKey(rawLine);
+    const routeStr = String(vp.route || vp.trip_id || vp.jrn || '').trim().toUpperCase();
+    const desiStr = String(vp.desi || '').trim().toUpperCase();
+    const headsignStr = String(vp.headsign || vp.head_sign || '').trim().toUpperCase();
+
+    const isH = routeStr.endsWith('H') || routeStr.includes('HALLI') || desiStr === 'H' || desiStr.endsWith('H') || headsignStr.includes('HALLI') || headsignStr.includes('SIIRTO');
+
+    const rawLine = isH ? 'H' : (desiStr || routeStr);
+    const lineKey = isH ? 'H' : normalizeLineKey(rawLine);
 
     // Vehicle unique ID
     const vehId = String(vp.veh || `${vp.oper || 'veh'}_${rawLine}_${Math.floor(vp.lat*1000)}`);
@@ -508,10 +512,15 @@
           if (message.entity) {
             message.entity.forEach((entity) => {
               if (entity.vehicle && entity.vehicle.position) {
-                const rawLabel = (vp.vehicle && vp.vehicle.label) ? String(vp.vehicle.label).trim() : '';
-                const rawRoute = (vp.trip && vp.trip.routeId) ? String(vp.trip.routeId).trim() : '';
-                const rawLine = (rawLabel.toUpperCase().includes('H') || rawLabel === 'H' || rawRoute.toUpperCase().includes('H')) ? 'H' : (rawRoute || rawLabel || '1');
-                const lineKey = normalizeLineKey(rawLine);
+                const vp = entity.vehicle;
+                const rawRoute = (vp.trip && vp.trip.routeId) ? String(vp.trip.routeId).trim().toUpperCase() : '';
+                const rawLabel = (vp.vehicle && vp.vehicle.label) ? String(vp.vehicle.label).trim().toUpperCase() : '';
+                const headsign = (vp.trip && vp.trip.tripHeadsign) ? String(vp.trip.tripHeadsign).trim().toUpperCase() : '';
+
+                const isH = rawRoute.endsWith('H') || rawLabel.endsWith('H') || rawRoute === 'H' || rawLabel === 'H' || headsign.includes('HALLI') || headsign.includes('SIIRTO');
+
+                const rawLine = isH ? 'H' : (rawRoute || rawLabel || '1');
+                const lineKey = isH ? 'H' : normalizeLineKey(rawLine);
 
                 if (CONFIG.DEFAULT_LINES.includes(lineKey)) {
                   const vehId = String((vp.vehicle && (vp.vehicle.id || vp.vehicle.label)) || entity.id);
