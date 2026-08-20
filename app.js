@@ -1194,15 +1194,16 @@
     // Legacy last seen UI helper stub
   }
 
-  // Disturbance & Detour Alerts System (GTFS-RT, GraphQL Poikkeusreitit, and Delays)
+  // Disturbance & Detour Alerts System (GTFS-RT, Poikkeusreitit, and Delays)
   async function fetchDisturbances() {
     const listEl = document.getElementById('disturbance-list');
     const badgeEl = document.getElementById('disturbance-count-badge');
     const t = TRANSLATIONS[state.currentLang] || TRANSLATIONS.fi;
     const items = [];
     const seenTitles = new Set();
+    const currentLang = state.currentLang;
 
-    // 1. Fetch GTFS-RT Service Alerts Feed (Protobuf)
+    // Fetch GTFS-RT Service Alerts Feed (Protobuf)
     try {
       const res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://realtime.hsl.fi/realtime/service-alerts/v2/hsl'));
       if (res.ok) {
@@ -1214,14 +1215,26 @@
         if (message.entity && Array.isArray(message.entity)) {
           message.entity.forEach((ent) => {
             if (ent.alert) {
-              const header = ent.alert.headerText?.translation?.[0]?.text || ent.alert.headerText?.translation?.find(x => x.language === state.currentLang)?.text || 'Poikkeustilanne / Häiriö';
-              const desc = ent.alert.descriptionText?.translation?.[0]?.text || ent.alert.descriptionText?.translation?.find(x => x.language === state.currentLang)?.text || '';
-              
+              // Extract language-specific translations with fallback
+              let header = '';
+              if (ent.alert.headerText && Array.isArray(ent.alert.headerText.translation)) {
+                const trLang = ent.alert.headerText.translation.find(x => x.language === currentLang);
+                header = trLang ? trLang.text : ent.alert.headerText.translation[0]?.text || '';
+              }
+
+              let desc = '';
+              if (ent.alert.descriptionText && Array.isArray(ent.alert.descriptionText.translation)) {
+                const trLang = ent.alert.descriptionText.translation.find(x => x.language === currentLang);
+                desc = trLang ? trLang.text : ent.alert.descriptionText.translation[0]?.text || '';
+              }
+
+              if (!header && !desc) return;
+
               let lines = [];
               if (ent.alert.informedEntity) {
                 ent.alert.informedEntity.forEach((ie) => {
                   if (ie.routeId) {
-                    let rId = ie.routeId.replace(/^10+/, '').replace(/^10/, '').replace(/[A-Z]$/, '');
+                    let rId = ie.routeId.replace(/^HSL:/, '').replace(/^10+/, '').replace(/^10/, '').replace(/[A-Za-z]$/, '');
                     if (rId === '15' || rId === '550') rId = '15';
                     if (CONFIG.DEFAULT_LINES.includes(rId) && !lines.includes(rId)) {
                       lines.push(rId);
@@ -1230,13 +1243,16 @@
                 });
               }
 
-              const itemKey = `${lines.join(',')}_${header}`;
+              const mainText = header || desc;
+              const displayTitle = lines.length > 0 ? `${t.linePrefix} ${lines.join(', ')}: ${mainText}` : mainText;
+              const itemKey = `${lines.join(',')}_${mainText.substring(0, 50)}`;
+
               if (!seenTitles.has(itemKey)) {
                 seenTitles.add(itemKey);
                 items.push({
-                  title: lines.length > 0 ? `${t.linePrefix} ${lines.join(', ')}: ${header}` : header,
-                  desc: desc,
-                  type: 'alert'
+                  title: displayTitle,
+                  desc: header ? desc : '',
+                  lines: lines
                 });
               }
             }
@@ -1247,62 +1263,7 @@
       console.warn('GTFS-RT alerts fetch error:', e);
     }
 
-    // 2. Fetch Digitransit GraphQL Alerts (Detours, Poikkeusreitit, Planned Route Modifications)
-    try {
-      const gqlQuery = {
-        query: `{
-          alerts {
-            alertHeaderText
-            alertDescriptionText
-            informedEntities {
-              route { shortName }
-            }
-          }
-        }`
-      };
-      const resGql = await fetch('https://api.digitransit.fi/routing/v1/router/hsl/index/graphql', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(gqlQuery)
-      });
-
-      if (resGql.ok) {
-        const json = await resGql.json();
-        if (json.data && json.data.alerts) {
-          json.data.alerts.forEach((alt) => {
-            const header = alt.alertHeaderText || '';
-            const desc = alt.alertDescriptionText || '';
-            const lines = [];
-            if (alt.informedEntities) {
-              alt.informedEntities.forEach((ie) => {
-                if (ie.route && ie.route.shortName) {
-                  let sName = ie.route.shortName;
-                  if (CONFIG.DEFAULT_LINES.includes(sName) && !lines.includes(sName)) {
-                    lines.push(sName);
-                  }
-                }
-              });
-            }
-
-            if (lines.length > 0) {
-              const itemKey = `${lines.join(',')}_${header}`;
-              if (!seenTitles.has(itemKey)) {
-                seenTitles.add(itemKey);
-                items.push({
-                  title: `${t.linePrefix} ${lines.join(', ')}: ${header}`,
-                  desc: desc,
-                  type: 'detour'
-                });
-              }
-            }
-          });
-        }
-      }
-    } catch (e) {
-      // Silently ignore GraphQL fallback if offline
-    }
-
-    // 3. Include major vehicle delays (> 3 min)
+    // Include major vehicle delays (> 3 min)
     state.vehicles.forEach((veh) => {
       if (veh.delay > 180) {
         const min = Math.round(veh.delay / 60);
@@ -1312,7 +1273,7 @@
           items.push({
             title: `${t.linePrefix} ${veh.rawLine} (#${veh.id})`,
             desc: `+${min} min ${t.delayed}`,
-            type: 'delay'
+            lines: [veh.line]
           });
         }
       }
