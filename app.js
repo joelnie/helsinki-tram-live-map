@@ -403,7 +403,9 @@
   function handleHfpVehiclePosition(vp) {
     if (!vp.lat || !vp.long || !vp.desi) return;
 
-    const rawLine = String(vp.desi).trim();
+    let rawLine = String(vp.desi || '').trim();
+    const isH = rawLine.toUpperCase().includes('H') || (vp.headsign && String(vp.headsign).toUpperCase().includes('HALLI')) || (vp.route && String(vp.route).toUpperCase().includes('H'));
+    if (isH) rawLine = 'H';
     const lineKey = normalizeLineKey(rawLine);
 
     // Vehicle unique ID
@@ -552,6 +554,16 @@
       existing.speed = data.speed;
       existing.delay = data.delay;
       existing.lastUpdated = data.lastUpdated;
+
+      if (existing.line !== data.line) {
+        existing.line = data.line;
+        existing.rawLine = data.rawLine;
+        if (existing.marker) {
+          state.map.removeLayer(existing.marker);
+        }
+        existing.marker = createTramMarker(data);
+        if (data.line === 'H') renderCircleFilterBar();
+      }
 
       if (existing.marker) {
         existing.marker.setLatLng([data.lat, data.lng]);
