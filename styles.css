@@ -1097,6 +1097,14 @@ body.light-theme .circle-line-btn {
   transform: scale(0.94);
 }
 
+body.light-theme .circle-line-btn.mode-hidden {
+  opacity: 0.9;
+  filter: grayscale(30%);
+  background: #e2e8f0;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
 .btn-pill {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid var(--border-glass);

@@ -753,6 +753,7 @@
     if (!track) return;
     track.innerHTML = '';
 
+    const isLight = state.currentTheme === 'light' || document.body.classList.contains('light-theme');
     const isPale = state.currentPalette === 'pale';
     const textColor = isPale ? '#1e293b' : '#ffffff';
     const borderColor = isPale ? '#1e293b' : '#ffffff';
@@ -780,15 +781,21 @@
         btn.style.boxShadow = `0 4px 12px ${meta.color}66`;
         btn.style.borderStyle = 'solid';
       } else if (mode === 'tracks_only') {
-        btn.style.backgroundColor = meta.color + '33';
+        btn.style.backgroundColor = meta.color + (isLight ? '22' : '33');
         btn.style.color = meta.color;
         btn.style.borderColor = meta.color;
         btn.style.borderStyle = 'dashed';
         btn.style.boxShadow = `0 0 10px ${meta.color}44`;
       } else {
-        btn.style.backgroundColor = 'rgba(255, 255, 255, 0.06)';
-        btn.style.color = isPale ? '#94a3b8' : 'rgba(255, 255, 255, 0.4)';
-        btn.style.borderColor = 'transparent';
+        if (isLight) {
+          btn.style.backgroundColor = '#e2e8f0';
+          btn.style.color = '#475569';
+          btn.style.borderColor = '#cbd5e1';
+        } else {
+          btn.style.backgroundColor = 'rgba(255, 255, 255, 0.06)';
+          btn.style.color = isPale ? '#94a3b8' : 'rgba(255, 255, 255, 0.4)';
+          btn.style.borderColor = 'transparent';
+        }
         btn.style.borderStyle = 'solid';
         btn.style.boxShadow = 'none';
       }
@@ -1043,6 +1050,8 @@
     const btnLight = document.getElementById('btn-theme-light');
     if (btnDark) btnDark.classList.toggle('active', theme === 'dark');
     if (btnLight) btnLight.classList.toggle('active', theme === 'light');
+
+    renderCircleFilterBar();
   }
 
   function setPalette(paletteKey, save = true) {
