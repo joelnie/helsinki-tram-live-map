@@ -117,26 +117,77 @@
     }
   }
 
+  // Parallel offset algorithm to render overlapping route tracks side-by-side
+  function offsetPolyline(points, offsetDist) {
+    if (!offsetDist || !points || points.length < 2) return points;
+    const result = [];
+    const len = points.length;
+
+    for (let i = 0; i < len; i++) {
+      let p1, p2;
+      if (i === 0) {
+        p1 = points[0];
+        p2 = points[1];
+      } else if (i === len - 1) {
+        p1 = points[len - 2];
+        p2 = points[len - 1];
+      } else {
+        p1 = points[i - 1];
+        p2 = points[i + 1];
+      }
+
+      const dLat = p2[0] - p1[0];
+      const dLng = p2[1] - p1[1];
+      const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+
+      if (dist === 0) {
+        result.push(points[i]);
+      } else {
+        // Normal vector perpendicular to segment direction
+        const nx = -dLng / dist;
+        const ny = dLat / dist;
+        // Adjust longitude scaling for Helsinki's ~60.17° latitude
+        const newLat = points[i][0] + nx * offsetDist;
+        const newLng = points[i][1] + (ny * offsetDist) / 0.5;
+        result.push([newLat, newLng]);
+      }
+    }
+    return result;
+  }
+
   function renderRouteTracks() {
     if (!state.routePolylineGroup) return;
     state.routePolylineGroup.clearLayers();
 
     if (!state.showRouteTracks || !state.routeData) return;
 
-    Object.keys(state.routeData).forEach((lineKey) => {
-      // Only render tracks for actively filtered tram lines
-      if (state.activeFilters.has(lineKey)) {
+    // Get sorted active line list for deterministic side-by-side track offset
+    const activeLineList = Array.from(state.activeFilters).sort((a, b) => {
+      const numA = parseInt(a, 10) || 99;
+      const numB = parseInt(b, 10) || 99;
+      return numA - numB;
+    });
+
+    const totalActive = activeLineList.length;
+
+    activeLineList.forEach((lineKey, idx) => {
+      if (state.routeData[lineKey]) {
         const segments = state.routeData[lineKey];
         const meta = LINE_META[lineKey] || { color: '#10b981' };
         const isLightRail = lineKey === '15';
         const weight = isLightRail ? 4.5 : 3.5;
 
+        // Calculate parallel track offset
+        const offsetStep = 0.000030; // ~3.3 meters lateral offset per line position
+        const offsetDist = (idx - (totalActive - 1) / 2) * offsetStep;
+
         segments.forEach((seg) => {
-          const polyline = L.polyline(seg, {
+          const shiftedSeg = offsetPolyline(seg, offsetDist);
+          const polyline = L.polyline(shiftedSeg, {
             color: meta.color,
             weight: weight,
-            opacity: 0.75,
-            smoothFactor: 1.5,
+            opacity: 0.8,
+            smoothFactor: 1.2,
             interactive: false
           });
           state.routePolylineGroup.addLayer(polyline);
