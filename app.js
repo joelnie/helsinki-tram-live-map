@@ -1203,7 +1203,6 @@
     const seenTitles = new Set();
     const currentLang = state.currentLang;
 
-    // Fetch GTFS-RT Service Alerts Feed (Protobuf)
     try {
       const res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://realtime.hsl.fi/realtime/service-alerts/v2/hsl'));
       if (res.ok) {
@@ -1215,26 +1214,36 @@
         if (message.entity && Array.isArray(message.entity)) {
           message.entity.forEach((ent) => {
             if (ent.alert) {
-              // Extract language-specific translations with fallback
-              let header = '';
-              if (ent.alert.headerText && Array.isArray(ent.alert.headerText.translation)) {
-                const trLang = ent.alert.headerText.translation.find(x => x.language === currentLang);
-                header = trLang ? trLang.text : ent.alert.headerText.translation[0]?.text || '';
+              const a = ent.alert;
+
+              // Helper to extract localized text from HSL GTFS-RT translation objects
+              function getTranslation(transObj) {
+                if (!transObj) return '';
+                if (typeof transObj === 'string') return transObj;
+                if (Array.isArray(transObj.translation)) {
+                  const match = transObj.translation.find(x => x.language === currentLang);
+                  if (match && match.text) return match.text;
+                  const matchFi = transObj.translation.find(x => x.language === 'fi');
+                  if (matchFi && matchFi.text) return matchFi.text;
+                  const matchEn = transObj.translation.find(x => x.language === 'en');
+                  if (matchEn && matchEn.text) return matchEn.text;
+                  return transObj.translation[0]?.text || '';
+                }
+                return '';
               }
 
-              let desc = '';
-              if (ent.alert.descriptionText && Array.isArray(ent.alert.descriptionText.translation)) {
-                const trLang = ent.alert.descriptionText.translation.find(x => x.language === currentLang);
-                desc = trLang ? trLang.text : ent.alert.descriptionText.translation[0]?.text || '';
-              }
+              let header = getTranslation(a.headerText);
+              let desc = getTranslation(a.descriptionText);
 
               if (!header && !desc) return;
 
               let lines = [];
-              if (ent.alert.informedEntity) {
-                ent.alert.informedEntity.forEach((ie) => {
+
+              // 1. Extract lines from informedEntity
+              if (a.informedEntity && Array.isArray(a.informedEntity)) {
+                a.informedEntity.forEach((ie) => {
                   if (ie.routeId) {
-                    let rId = ie.routeId.replace(/^HSL:/, '').replace(/^10+/, '').replace(/^10/, '').replace(/[A-Za-z]$/, '');
+                    let rId = String(ie.routeId).replace(/^HSL:/, '').replace(/^10+/, '').replace(/^10/, '').replace(/[A-Za-z]$/, '');
                     if (rId === '15' || rId === '550') rId = '15';
                     if (CONFIG.DEFAULT_LINES.includes(rId) && !lines.includes(rId)) {
                       lines.push(rId);
@@ -1243,15 +1252,39 @@
                 });
               }
 
-              const mainText = header || desc;
-              const displayTitle = lines.length > 0 ? `${t.linePrefix} ${lines.join(', ')}: ${mainText}` : mainText;
-              const itemKey = `${lines.join(',')}_${mainText.substring(0, 50)}`;
+              // 2. Extract lines from header/desc text if informedEntity has no routeId
+              const fullText = `${header} ${desc}`;
+              const textMatches = fullText.match(/(?:Ratikat|ratikat|Ratikat|Linjat|linjat|Linja|linja|Trams|trams|Tram|tram|Spårvagnarna|spårvagnarna|Spårvagn|spårvagn)\s+([\d\s,\&jaand+tT]+)/gi);
+              if (textMatches) {
+                textMatches.forEach((tm) => {
+                  const nums = tm.match(/\b(15|13|10|[1-9])[tT]?\b/g);
+                  if (nums) {
+                    nums.forEach((num) => {
+                      let cleanNum = num.toUpperCase();
+                      if (CONFIG.DEFAULT_LINES.includes(cleanNum) && !lines.includes(cleanNum)) {
+                        lines.push(cleanNum);
+                      }
+                    });
+                  }
+                });
+              }
+
+              // Include alert if it pertains to tram lines or mentions tram keywords
+              const isTramAlert = lines.length > 0 || /(?:ratik|tram|spårvagn|raitiovaunu)/i.test(fullText);
+              if (!isTramAlert) return;
+
+              const mainTitle = header || desc;
+              const displayTitle = (lines.length > 0 && !mainTitle.toLowerCase().includes(t.linePrefix.toLowerCase()) && !mainTitle.toLowerCase().includes('ratika'))
+                ? `${t.linePrefix} ${lines.join(', ')}: ${mainTitle}`
+                : mainTitle;
+
+              const itemKey = mainTitle.substring(0, 60);
 
               if (!seenTitles.has(itemKey)) {
                 seenTitles.add(itemKey);
                 items.push({
                   title: displayTitle,
-                  desc: header ? desc : '',
+                  desc: (header && desc && desc !== header) ? desc : '',
                   lines: lines
                 });
               }
