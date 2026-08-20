@@ -23,18 +23,18 @@
 
   // Line Descriptions, Destinations, & Distinct Color Palette for display
   const LINE_META = {
-    '1': { name: 'Eira – Käpylä', color: '#10b981' },       // Emerald Green
-    '2': { name: 'Olympiaterminaali – Pasila', color: '#f97316' }, // Coral Orange
-    '3': { name: 'Olympiaterminaali – Meilahti', color: '#f59e0b' }, // Amber Gold
-    '4': { name: 'Katajanokka – Munkkiniemi', color: '#84cc16' },   // Lime Green
-    '5': { name: 'Katajanokan terminaali – Rautatientori', color: '#f43f5e' }, // Rose Pink
-    '6': { name: 'Hietalahti – Arabia', color: '#ec4899' },      // Magenta Pink
-    '7': { name: 'Länsiterminaali – Meilahden sairaala', color: '#a855f7' }, // Lavender Purple
-    '8': { name: 'Jätkäsaari – Arabia', color: '#06b6d4' },      // Cyan Sky
-    '9': { name: 'Länsiterminaali – Ilmala', color: '#14b8a6' }, // Turquoise Teal
-    '10': { name: 'Kirurgi – Pikku Huopalahti', color: '#6366f1' }, // Indigo Violet
-    '13': { name: 'Kalasatama – Pasila', color: '#eab308' },     // Electric Yellow
-    '15': { name: 'Raide-Jokeri: Keilaniemi – Itäkeskus', color: '#007ac9', isLightRail: true } // Raide-Jokeri Blue
+    '1': { name: { fi: 'Eira – Käpylä', en: 'Eira – Käpylä' }, color: '#10b981' },
+    '2': { name: { fi: 'Olympiaterminaali – Pasila', en: 'Olympia Terminal – Pasila' }, color: '#f97316' },
+    '3': { name: { fi: 'Olympiaterminaali – Meilahti', en: 'Olympia Terminal – Meilahti' }, color: '#f59e0b' },
+    '4': { name: { fi: 'Katajanokka – Munkkiniemi', en: 'Katajanokka – Munkkiniemi' }, color: '#84cc16' },
+    '5': { name: { fi: 'Katajanokan terminaali – Rautatientori', en: 'Katajanokka Terminal – Railway Station' }, color: '#f43f5e' },
+    '6': { name: { fi: 'Hietalahti – Arabia', en: 'Hietalahti – Arabia' }, color: '#ec4899' },
+    '7': { name: { fi: 'Länsiterminaali – Meilahden sairaala', en: 'West Terminal – Meilahti Hospital' }, color: '#a855f7' },
+    '8': { name: { fi: 'Jätkäsaari – Arabia', en: 'Jätkäsaari – Arabia' }, color: '#06b6d4' },
+    '9': { name: { fi: 'Länsiterminaali – Ilmala', en: 'West Terminal – Ilmala' }, color: '#14b8a6' },
+    '10': { name: { fi: 'Kirurgi – Pikku Huopalahti', en: 'Surgical Hospital – Pikku Huopalahti' }, color: '#6366f1' },
+    '13': { name: { fi: 'Kalasatama – Pasila', en: 'Kalasatama – Pasila' }, color: '#eab308' },
+    '15': { name: { fi: 'Raide-Jokeri: Keilaniemi – Itäkeskus', en: 'Light Rail 15: Keilaniemi – Itäkeskus' }, color: '#007ac9', isLightRail: true }
   };
 
   // State Management
@@ -593,15 +593,18 @@
 
   function updateDrawerStats(veh) {
     const t = TRANSLATIONS[state.currentLang] || TRANSLATIONS.fi;
-    const meta = LINE_META[veh.line] || { name: `${t.brand} ${veh.rawLine}`, color: '#10b981' };
+    const meta = LINE_META[veh.line] || { name: { fi: `Raitiolinja ${veh.rawLine}`, en: `Tram line ${veh.rawLine}` }, color: '#10b981' };
+    const routeName = (typeof meta.name === 'object') ? (meta.name[state.currentLang] || meta.name.fi) : meta.name;
     const badgeEl = document.getElementById('drawer-line-badge');
+    const isPale = state.currentPalette === 'pale';
     
     badgeEl.textContent = veh.rawLine;
     badgeEl.style.backgroundColor = meta.color;
+    badgeEl.style.color = isPale ? '#1e293b' : '#ffffff';
     badgeEl.style.boxShadow = `0 4px 12px ${meta.color}66`;
 
-    document.getElementById('drawer-title').textContent = `${t.brand ? 'Linja' : 'Line'} ${veh.rawLine}`;
-    document.getElementById('drawer-subtitle').textContent = meta.name;
+    document.getElementById('drawer-title').textContent = `${t.linePrefix} ${veh.rawLine}`;
+    document.getElementById('drawer-subtitle').textContent = routeName;
     document.getElementById('stat-speed').innerHTML = `${veh.speed} <small>km/h</small>`;
 
     // Format Delay
@@ -624,7 +627,9 @@
   }
 
   function getCompassHeading(deg) {
-    const directions = ['Pohjoinen (P)', 'Koillinen (KO)', 'Itä (I)', 'Kaakko (KA)', 'Etelä (E)', 'Lounas (LO)', 'Länsi (L)', 'Luode (LU)'];
+    const directions = (state.currentLang === 'en') 
+        ? ['North (N)', 'North-East (NE)', 'East (E)', 'South-East (SE)', 'South (S)', 'South-West (SW)', 'West (W)', 'North-West (NW)']
+        : ['Pohjoinen (P)', 'Koillinen (KO)', 'Itä (I)', 'Kaakko (KA)', 'Etelä (E)', 'Lounas (LO)', 'Länsi (L)', 'Luode (LU)'];
     const idx = Math.round(deg / 45) % 8;
     return directions[idx];
   }
@@ -804,11 +809,11 @@
       offline: "Ei yhteyttä",
       trams: "vaunua",
       settingsTitle: "Asetukset",
-      language: "Kieli / Language",
-      theme: "Teema / Theme",
-      darkTheme: "🌙 Tumma / Dark",
-      lightTheme: "☀️ Vaalea / Light",
-      colorPalette: "Ratikoiden väriteema / Color Palette",
+      language: "Kieli",
+      theme: "Teema",
+      darkTheme: "Tumma",
+      lightTheme: "Vaalea",
+      colorPalette: "Ratikoiden väriteema",
       paletteDefault: "Oletus",
       paletteRainbow: "Sateenkaari",
       palettePale: "Haalea",
@@ -821,6 +826,7 @@
       early: "etuajassa",
       vehNo: "Vaununumero",
       direction: "Suunta",
+      linePrefix: "Linja",
       followTram: "Seuraa vaunua",
       followingTram: "Seurataan vaunua kartalla",
       dataSource: "Lähde: HSL Avoin Data",
@@ -834,11 +840,11 @@
       offline: "Offline",
       trams: "trams",
       settingsTitle: "Settings",
-      language: "Language / Kieli",
-      theme: "Theme / Teema",
-      darkTheme: "🌙 Dark / Tumma",
-      lightTheme: "☀️ Light / Vaalea",
-      colorPalette: "Tram Color Palette",
+      language: "Language",
+      theme: "Theme",
+      darkTheme: "Dark",
+      lightTheme: "Light",
+      colorPalette: "Color Palette",
       paletteDefault: "Default",
       paletteRainbow: "Rainbow",
       palettePale: "Pale",
@@ -851,6 +857,7 @@
       early: "early",
       vehNo: "Vehicle No.",
       direction: "Direction",
+      linePrefix: "Line",
       followTram: "Follow Tram",
       followingTram: "Following tram on map",
       dataSource: "Source: HSL Open Data",
@@ -877,8 +884,28 @@
     document.getElementById('lbl-theme').textContent = t.theme;
     document.getElementById('lbl-palette').textContent = t.colorPalette;
 
+    document.getElementById('btn-lang-fi').textContent = '🇫🇮 Suomi';
+    document.getElementById('btn-lang-en').textContent = '🇬🇧 English';
+
+    document.getElementById('btn-theme-dark').textContent = `🌙 ${t.darkTheme}`;
+    document.getElementById('btn-theme-light').textContent = `☀️ ${t.lightTheme}`;
+
     document.getElementById('btn-lang-fi').classList.toggle('active', lang === 'fi');
     document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
+
+    // Update Drawer Labels
+    const lblSpeed = document.getElementById('lbl-stat-speed');
+    if (lblSpeed) lblSpeed.textContent = t.speed;
+    const lblDelay = document.getElementById('lbl-stat-delay');
+    if (lblDelay) lblDelay.textContent = t.delay;
+    const lblVeh = document.getElementById('lbl-stat-veh');
+    if (lblVeh) lblVeh.textContent = t.vehNo;
+    const lblHdg = document.getElementById('lbl-stat-hdg');
+    if (lblHdg) lblHdg.textContent = t.direction;
+    const txtTrack = document.getElementById('txt-track-tram');
+    if (txtTrack) txtTrack.textContent = t.followTram;
+    const dataSource = document.getElementById('drawer-data-source');
+    if (dataSource) dataSource.textContent = t.dataSource;
 
     document.querySelectorAll('.palette-name').forEach((el) => {
       const key = el.dataset.key;
@@ -887,10 +914,15 @@
 
     const pwaTitle = document.getElementById('txt-pwa-title');
     if (pwaTitle) pwaTitle.textContent = t.pwaTitle;
+    const pwaDesc = document.getElementById('txt-pwa-desc');
+    if (pwaDesc) pwaDesc.innerHTML = `${t.pwaDesc}`;
 
     if (state.selectedVehicleId) {
-      const veh = state.vehicles.get(`veh_${state.selectedVehicleId}`);
-      if (veh) updateDrawerStats(veh);
+      let foundVeh = null;
+      state.vehicles.forEach((v) => {
+        if (v.id === state.selectedVehicleId) foundVeh = v;
+      });
+      if (foundVeh) updateDrawerStats(foundVeh);
     }
   }
 
