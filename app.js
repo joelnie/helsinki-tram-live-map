@@ -617,9 +617,6 @@
 
     document.getElementById('stat-veh').textContent = `#${veh.id}`;
     document.getElementById('stat-hdg').textContent = `${veh.heading}° ${getCompassHeading(veh.heading)}`;
-
-    const lastSeenSec = Math.floor((Date.now() - veh.lastUpdated) / 1000);
-    document.getElementById('drawer-last-seen').textContent = `Päivitetty: ${lastSeenSec < 3 ? 'äsken' : lastSeenSec + ' s sitten'}`;
   }
 
   function getCompassHeading(deg) {
@@ -803,12 +800,7 @@
       showToast('Seurataan vaunua kartalla', 'info');
     });
 
-    // Recenter & Locate buttons
-    document.getElementById('btn-recenter').addEventListener('click', () => {
-      state.isFollowing = false;
-      state.map.flyTo(CONFIG.HELSINKI_CENTER, CONFIG.DEFAULT_ZOOM, { duration: 1 });
-    });
-
+    // Locate user button
     document.getElementById('btn-locate').addEventListener('click', locateUser);
 
     // Dismiss iOS PWA banner
@@ -878,18 +870,7 @@
   }
 
   function updateLastSeenUI() {
-    const el = document.getElementById('last-update-time');
-    if (!state.lastMsgTimestamp) {
-      el.textContent = 'Yhdistetään...';
-      return;
-    }
-
-    const secAgo = Math.floor((Date.now() - state.lastMsgTimestamp) / 1000);
-    if (secAgo < 3) {
-      el.textContent = 'Päivitetty äsken';
-    } else {
-      el.textContent = `Päivitetty ${secAgo} s sitten`;
-    }
+    // Legacy last seen UI helper stub
   }
 
   // Toast Notification System
