@@ -319,9 +319,28 @@ body.light-theme .btn-icon:hover {
 }
 
 .banner-text strong {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.banner-text > strong,
+#txt-pwa-title {
   display: block;
-  font-size: 13px;
-  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 3px;
+}
+
+body.light-theme .ios-pwa-banner {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(0, 152, 95, 0.4);
+  color: #0f172a;
+}
+
+body.light-theme .banner-text strong,
+body.light-theme #txt-pwa-title {
+  color: #0f172a;
 }
 
 .share-icon {
