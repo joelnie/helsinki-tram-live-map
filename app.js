@@ -434,12 +434,35 @@
     updateVehicleOnMap(vehicleData);
   }
 
-  // Normalize line numbers like "8T" -> "8", "9T" -> "9", "15" -> "15"
+  // Normalize line numbers like "8T" -> "8", "1001H" -> "H", "1015" -> "15"
   function normalizeLineKey(line) {
     if (!line) return '';
-    let normalized = line.replace(/[^0-9]/g, '');
-    if (!normalized) normalized = line;
-    return normalized;
+    const str = String(line).trim().toUpperCase().replace(/^HSL:/, '');
+
+    // Depot / Transfer / Halliajo lines (e.g. "H", "HALLI", "1001H", "1007H", "1015H")
+    if (str === 'H' || str.endsWith('H') || str.includes('HALLI') || str.includes('SIIRTO')) {
+      return 'H';
+    }
+
+    // Direct route map for HSL GTFS route IDs
+    const routeMap = {
+      '1001': '1', '1002': '2', '1003': '3', '1004': '4',
+      '1005': '5', '1006': '6', '1007': '7', '1008': '8',
+      '1009': '9', '1010': '10', '1013': '13', '1015': '15',
+      '1008T': '8', '1009T': '9'
+    };
+    if (routeMap[str]) return routeMap[str];
+
+    let digits = str.replace(/[^0-9]/g, '');
+    if (digits.length >= 4 && digits.startsWith('10')) {
+      const shortNum = String(parseInt(digits.substring(2), 10));
+      if (CONFIG.DEFAULT_LINES.includes(shortNum)) return shortNum;
+    }
+
+    if (CONFIG.DEFAULT_LINES.includes(digits)) return digits;
+    if (CONFIG.DEFAULT_LINES.includes(str)) return str;
+
+    return digits || str;
   }
 
   // 2. GTFS-RT HTTP Polling Fallback
@@ -599,14 +622,17 @@
   // Remove stale vehicles that haven't emitted signal for > 3 minutes
   function cleanStaleVehicles() {
     const now = Date.now();
+    let removedH = false;
     state.vehicles.forEach((veh, key) => {
       if (now - veh.lastUpdated > CONFIG.STALE_THRESHOLD_MS) {
         if (veh.marker && state.map.hasLayer(veh.marker)) {
           state.map.removeLayer(veh.marker);
         }
+        if (veh.line === 'H') removedH = true;
         state.vehicles.delete(key);
       }
     });
+    if (removedH) renderCircleFilterBar();
     updateTramCounterUI();
   }
 
