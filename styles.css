@@ -650,7 +650,10 @@ html, body {
 }
 
 .detail-drawer.hidden {
-  transform: translateY(100%);
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0;
+  transform: translateY(120%);
   pointer-events: none;
 }
 
