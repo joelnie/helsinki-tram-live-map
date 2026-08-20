@@ -428,8 +428,124 @@ body {
   justify-content: space-between;
 }
 
+/* Light Theme Variables */
+body.light-theme {
+  --bg-dark: #f1f5f9;
+  --bg-card: rgba(255, 255, 255, 0.94);
+  --bg-glass: rgba(255, 255, 255, 0.88);
+  --border-glass: rgba(0, 0, 0, 0.1);
+  --text-main: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.08);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
 .modal-title {
   font-size: 18px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+/* Settings Modal Controls */
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+/* Segmented Control (Language & Theme) */
+.segmented-control {
+  display: flex;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-glass);
+  border-radius: 14px;
+  padding: 3px;
+  gap: 4px;
+}
+
+body.light-theme .segmented-control {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.segmented-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 11px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.segmented-btn.active {
+  background: var(--color-hsl-green);
+  color: #ffffff;
+  box-shadow: 0 2px 8px var(--color-hsl-green-glow);
+}
+
+/* Palette Selector Grid */
+.palette-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+@media (min-width: 480px) {
+  .palette-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.palette-option-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+body.light-theme .palette-option-btn {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.palette-option-btn.active {
+  border-color: var(--color-hsl-green);
+  background: rgba(0, 152, 95, 0.12);
+}
+
+.palette-preview {
+  display: flex;
+  gap: 4px;
+}
+
+.palette-preview span {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.palette-name {
+  font-size: 11px;
   font-weight: 700;
   color: var(--text-main);
 }

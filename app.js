@@ -37,9 +37,7 @@
     '15': { name: 'Raide-Jokeri: Keilaniemi – Itäkeskus', color: '#007ac9', isLightRail: true } // Raide-Jokeri Blue
   };
 
-  // =========================================================================
-  // STATE MANAGEMENT
-  // =========================================================================
+  // State Management
   const state = {
     map: null,
     userMarker: null,
@@ -51,17 +49,21 @@
     selectedVehicleId: null,
     isFollowing: false,
     mqttClient: null,
-    connectionMode: 'connecting', // 'mqtt' | 'gtfs-rt' | 'offline'
+    connectionMode: 'connecting',
     gtfsPollTimer: null,
     mqttTimeoutTimer: null,
     lastMsgTimestamp: null,
-    staleCheckTimer: null
+    staleCheckTimer: null,
+    currentLang: localStorage.getItem('app_lang') || 'fi',
+    currentTheme: localStorage.getItem('app_theme') || 'dark',
+    currentPalette: localStorage.getItem('tram_palette') || 'default'
   };
 
   // =========================================================================
   // INITIALIZATION
   // =========================================================================
   document.addEventListener('DOMContentLoaded', () => {
+    initSettings();
     initFilters();
     initMap();
     initUIEvents();
@@ -590,29 +592,30 @@
   }
 
   function updateDrawerStats(veh) {
-    const meta = LINE_META[veh.line] || { name: `Raitiolinja ${veh.rawLine}`, color: '#10b981' };
+    const t = TRANSLATIONS[state.currentLang] || TRANSLATIONS.fi;
+    const meta = LINE_META[veh.line] || { name: `${t.brand} ${veh.rawLine}`, color: '#10b981' };
     const badgeEl = document.getElementById('drawer-line-badge');
     
     badgeEl.textContent = veh.rawLine;
     badgeEl.style.backgroundColor = meta.color;
     badgeEl.style.boxShadow = `0 4px 12px ${meta.color}66`;
 
-    document.getElementById('drawer-title').textContent = `Linja ${veh.rawLine}`;
+    document.getElementById('drawer-title').textContent = `${t.brand ? 'Linja' : 'Line'} ${veh.rawLine}`;
     document.getElementById('drawer-subtitle').textContent = meta.name;
     document.getElementById('stat-speed').innerHTML = `${veh.speed} <small>km/h</small>`;
 
     // Format Delay
     const delayEl = document.getElementById('stat-delay');
     if (Math.abs(veh.delay) <= 15) {
-      delayEl.textContent = 'Aikataulussa';
+      delayEl.textContent = t.onTime;
       delayEl.className = 'stat-value status-on-time';
     } else if (veh.delay > 15) {
       const min = Math.round(veh.delay / 60);
-      delayEl.textContent = `+${min > 0 ? min + ' min' : veh.delay + 's'} myöhässä`;
+      delayEl.textContent = `+${min > 0 ? min + ' min' : veh.delay + 's'} ${t.delayed}`;
       delayEl.className = 'stat-value status-delayed';
     } else {
       const min = Math.abs(Math.round(veh.delay / 60));
-      delayEl.textContent = `-${min > 0 ? min + ' min' : Math.abs(veh.delay) + 's'} etuajassa`;
+      delayEl.textContent = `-${min > 0 ? min + ' min' : Math.abs(veh.delay) + 's'} ${t.early}`;
       delayEl.className = 'stat-value status-early';
     }
 
@@ -762,20 +765,220 @@
   // =========================================================================
   // UI EVENT HANDLERS & HELPERS
   // =========================================================================
-  function initUIEvents() {
+  // =========================================================================
+  // SETTINGS & INTERNATIONALIZATION (FI / EN, THEMES & PALETTES)
+  // =========================================================================
+  const PALETTES = {
+    default: {
+      '1': '#10b981', '2': '#f97316', '3': '#f59e0b', '4': '#84cc16',
+      '5': '#f43f5e', '6': '#ec4899', '7': '#a855f7', '8': '#06b6d4',
+      '9': '#14b8a6', '10': '#6366f1', '13': '#eab308', '15': '#007ac9'
+    },
+    rainbow: {
+      '1': '#ff0055', '2': '#ff5500', '3': '#ffaa00', '4': '#aaff00',
+      '5': '#00ff66', '6': '#00ffcc', '7': '#0099ff', '8': '#3333ff',
+      '9': '#8800ff', '10': '#ff00ff', '13': '#ff00aa', '15': '#00e5ff'
+    },
+    pale: {
+      '1': '#a7f3d0', '2': '#fed7aa', '3': '#fef08a', '4': '#d9f99d',
+      '5': '#fecdd3', '6': '#fbcfe8', '7': '#e9d5ff', '8': '#cff4fc',
+      '9': '#ccfbf1', '10': '#c7d2fe', '13': '#fef08a', '15': '#bae6fd'
+    },
+    hsl: {
+      '1': '#007348', '2': '#007348', '3': '#007348', '4': '#007348',
+      '5': '#007348', '6': '#007348', '7': '#007348', '8': '#007348',
+      '9': '#007348', '10': '#007348', '13': '#007348', '15': '#007ac9'
+    },
+    dark: {
+      '1': '#18181b', '2': '#18181b', '3': '#18181b', '4': '#18181b',
+      '5': '#18181b', '6': '#18181b', '7': '#18181b', '8': '#18181b',
+      '9': '#18181b', '10': '#18181b', '13': '#18181b', '15': '#18181b'
+    }
+  };
 
-    // Drawer Controls
-    document.getElementById('btn-close-drawer').addEventListener('click', deselectVehicle);
-    document.getElementById('btn-track-tram').addEventListener('click', () => {
-      state.isFollowing = true;
-      if (state.selectedVehicleId) {
-        state.vehicles.forEach(v => {
-          if (v.id === state.selectedVehicleId) {
-            state.map.panTo([v.lat, v.lng], { animate: true });
-          }
-        });
+  const TRANSLATIONS = {
+    fi: {
+      brand: "Spora-Live",
+      connecting: "Yhdistetään...",
+      live: "Live",
+      offline: "Ei yhteyttä",
+      trams: "vaunua",
+      settingsTitle: "Asetukset",
+      language: "Kieli / Language",
+      theme: "Teema / Theme",
+      darkTheme: "🌙 Tumma / Dark",
+      lightTheme: "☀️ Vaalea / Light",
+      colorPalette: "Ratikoiden väriteema / Color Palette",
+      paletteDefault: "Oletus",
+      paletteRainbow: "Sateenkaari",
+      palettePale: "Haalea",
+      paletteHsl: "HSL",
+      paletteDark: "Musta",
+      speed: "Nopeus",
+      delay: "Tila / Viive",
+      onTime: "Aikataulussa",
+      delayed: "myöhässä",
+      early: "etuajassa",
+      vehNo: "Vaununumero",
+      direction: "Suunta",
+      followTram: "Seuraa vaunua",
+      followingTram: "Seurataan vaunua kartalla",
+      dataSource: "Lähde: HSL Avoin Data",
+      pwaTitle: "Asenna Spora-Live",
+      pwaDesc: "Paina ⎋ Jaa, ja valitse Lisää kotivalikkoon."
+    },
+    en: {
+      brand: "Spora-Live",
+      connecting: "Connecting...",
+      live: "Live",
+      offline: "Offline",
+      trams: "trams",
+      settingsTitle: "Settings",
+      language: "Language / Kieli",
+      theme: "Theme / Teema",
+      darkTheme: "🌙 Dark / Tumma",
+      lightTheme: "☀️ Light / Vaalea",
+      colorPalette: "Tram Color Palette",
+      paletteDefault: "Default",
+      paletteRainbow: "Rainbow",
+      palettePale: "Pale",
+      paletteHsl: "HSL",
+      paletteDark: "Black",
+      speed: "Speed",
+      delay: "Status / Delay",
+      onTime: "On time",
+      delayed: "late",
+      early: "early",
+      vehNo: "Vehicle No.",
+      direction: "Direction",
+      followTram: "Follow Tram",
+      followingTram: "Following tram on map",
+      dataSource: "Source: HSL Open Data",
+      pwaTitle: "Install Spora-Live",
+      pwaDesc: "Tap ⎋ Share, then select Add to Home Screen."
+    }
+  };
+
+  function initSettings() {
+    setLanguage(state.currentLang, false);
+    setTheme(state.currentTheme, false);
+    setPalette(state.currentPalette, false);
+  }
+
+  function setLanguage(lang, save = true) {
+    state.currentLang = lang;
+    if (save) localStorage.setItem('app_lang', lang);
+
+    const t = TRANSLATIONS[lang] || TRANSLATIONS.fi;
+
+    document.querySelectorAll('.count-label').forEach(el => el.textContent = t.trams);
+    document.getElementById('txt-settings-title').textContent = t.settingsTitle;
+    document.getElementById('lbl-language').textContent = t.language;
+    document.getElementById('lbl-theme').textContent = t.theme;
+    document.getElementById('lbl-palette').textContent = t.colorPalette;
+
+    document.getElementById('btn-lang-fi').classList.toggle('active', lang === 'fi');
+    document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
+
+    document.querySelectorAll('.palette-name').forEach((el) => {
+      const key = el.dataset.key;
+      if (key && t[key]) el.textContent = t[key];
+    });
+
+    const pwaTitle = document.getElementById('txt-pwa-title');
+    if (pwaTitle) pwaTitle.textContent = t.pwaTitle;
+
+    if (state.selectedVehicleId) {
+      const veh = state.vehicles.get(`veh_${state.selectedVehicleId}`);
+      if (veh) updateDrawerStats(veh);
+    }
+  }
+
+  function setTheme(theme, save = true) {
+    state.currentTheme = theme;
+    if (save) localStorage.setItem('app_theme', theme);
+
+    if (theme === 'light') {
+      document.body.classList.add('light-theme');
+    } else {
+      document.body.classList.remove('light-theme');
+    }
+
+    document.getElementById('btn-theme-dark').classList.toggle('active', theme === 'dark');
+    document.getElementById('btn-theme-light').classList.toggle('active', theme === 'light');
+  }
+
+  function setPalette(paletteKey, save = true) {
+    if (!PALETTES[paletteKey]) paletteKey = 'default';
+    state.currentPalette = paletteKey;
+    if (save) localStorage.setItem('tram_palette', paletteKey);
+
+    const activeMap = PALETTES[paletteKey];
+    Object.keys(activeMap).forEach((lineKey) => {
+      if (LINE_META[lineKey]) {
+        LINE_META[lineKey].color = activeMap[lineKey];
       }
-      showToast('Seurataan vaunua kartalla', 'info');
+    });
+
+    renderCircleFilterBar();
+    renderRouteTracks();
+
+    state.vehicles.forEach((veh) => {
+      if (veh.marker) {
+        state.map.removeLayer(veh.marker);
+        const newMarker = createTramMarker(veh);
+        veh.marker = newMarker;
+        if (state.activeFilters.has(veh.line)) {
+          newMarker.addTo(state.map);
+        }
+      }
+    });
+
+    document.querySelectorAll('.palette-option-btn').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.palette === paletteKey);
+    });
+  }
+
+  function initUIEvents() {
+    // Settings Modal Controls
+    const btnSettings = document.getElementById('btn-settings');
+    const settingsModal = document.getElementById('settings-modal');
+    const btnCloseSettings = document.getElementById('btn-close-settings');
+
+    if (btnSettings && settingsModal) {
+      btnSettings.addEventListener('click', () => {
+        settingsModal.classList.remove('hidden');
+      });
+    }
+
+    if (btnCloseSettings && settingsModal) {
+      btnCloseSettings.addEventListener('click', () => {
+        settingsModal.classList.add('hidden');
+      });
+    }
+
+    if (settingsModal) {
+      settingsModal.addEventListener('click', (e) => {
+        if (e.target.id === 'settings-modal') {
+          settingsModal.classList.add('hidden');
+        }
+      });
+    }
+
+    // Language Toggles
+    document.getElementById('btn-lang-fi')?.addEventListener('click', () => setLanguage('fi'));
+    document.getElementById('btn-lang-en')?.addEventListener('click', () => setLanguage('en'));
+
+    // Theme Toggles
+    document.getElementById('btn-theme-dark')?.addEventListener('click', () => setTheme('dark'));
+    document.getElementById('btn-theme-light')?.addEventListener('click', () => setTheme('light'));
+
+    // Palette Options
+    document.querySelectorAll('.palette-option-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const pal = btn.dataset.palette;
+        setPalette(pal);
+      });
     });
 
     // Locate user button
