@@ -311,7 +311,7 @@
       });
 
       state.mqttClient.on('connect', () => {
-        updateConnectionStatus('live', 'Reaaliaika');
+        updateConnectionStatus('live', 'Live');
         
         state.mqttClient.subscribe(CONFIG.MQTT_TOPIC, (err) => {
           if (err) {
@@ -322,7 +322,7 @@
 
       state.mqttClient.on('message', (topic, message) => {
         state.lastMsgTimestamp = Date.now();
-        updateConnectionStatus('live', 'Reaaliaika');
+        updateConnectionStatus('live', 'Live');
 
         if (state.mqttTimeoutTimer) {
           clearTimeout(state.mqttTimeoutTimer);
@@ -435,7 +435,7 @@
           const message = FeedMessage.decode(new Uint8Array(buffer));
           
           state.lastMsgTimestamp = Date.now();
-          updateConnectionStatus('live', 'Reaaliaika');
+          updateConnectionStatus('live', 'Live');
 
           if (message.entity) {
             message.entity.forEach((entity) => {
