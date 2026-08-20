@@ -506,8 +506,9 @@
           if (message.entity) {
             message.entity.forEach((entity) => {
               if (entity.vehicle && entity.vehicle.position) {
-                const vp = entity.vehicle;
-                const rawLine = vp.trip && vp.trip.routeId ? String(vp.trip.routeId).trim() : '1';
+                const rawLabel = (vp.vehicle && vp.vehicle.label) ? String(vp.vehicle.label).trim() : '';
+                const rawRoute = (vp.trip && vp.trip.routeId) ? String(vp.trip.routeId).trim() : '';
+                const rawLine = (rawLabel.toUpperCase().includes('H') || rawLabel === 'H' || rawRoute.toUpperCase().includes('H')) ? 'H' : (rawRoute || rawLabel || '1');
                 const lineKey = normalizeLineKey(rawLine);
 
                 if (CONFIG.DEFAULT_LINES.includes(lineKey)) {
@@ -590,7 +591,10 @@
 
   // Create Custom HTML Leaflet DivIcon for Tram
   function createTramMarker(data) {
-    const meta = LINE_META[data.line] || { color: '#10b981' };
+    const isHLine = data.line === 'H' || String(data.rawLine).toUpperCase().includes('H');
+    const effectiveLine = isHLine ? 'H' : data.line;
+    const meta = LINE_META[effectiveLine] || LINE_META['H'] || { color: '#64748b' };
+    const displayLabel = isHLine ? 'H' : data.rawLine;
     const isSelected = state.selectedVehicleId === data.id;
 
     const iconHtml = `
@@ -598,7 +602,7 @@
         <svg class="tram-direction-pointer" viewBox="0 0 16 16" style="transform: rotate(${data.heading}deg) translateY(-20px)">
           <polygon points="8,1 14,14 8,10 2,14" fill="${meta.color}" stroke="#ffffff" stroke-width="1.8" stroke-linejoin="round" />
         </svg>
-        <div class="tram-marker-icon" style="background-color: ${meta.color}; box-shadow: 0 4px 12px ${meta.color}77;">${data.rawLine}</div>
+        <div class="tram-marker-icon" style="background-color: ${meta.color}; box-shadow: 0 4px 12px ${meta.color}77;">${displayLabel}</div>
       </div>
     `;
 
