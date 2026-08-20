@@ -1,6 +1,6 @@
 {
-  "name": "Helsinki Ratikka Live",
-  "short_name": "Ratikat",
+  "name": "Spora-Live",
+  "short_name": "Spora-Live",
   "description": "Helsingin raitiovaunujen ja Raide-Jokerin reaaliaikainen karttapalvelu.",
   "start_url": "./index.html",
   "display": "standalone",
