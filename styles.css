@@ -45,27 +45,21 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-html {
-  width: 100%;
-  height: 100%;
-  height: -webkit-fill-available;
-}
-
-body {
+html, body {
   width: 100vw;
   height: 100vh;
   height: 100dvh;
   min-height: -webkit-fill-available;
   position: fixed;
   inset: 0;
-  overflow: hidden;
-  font-family: var(--font-family);
-  background-color: #1a202c;
+  background-color: var(--bg-dark);
   color: var(--text-main);
+  font-family: var(--font-family);
+  overflow: hidden;
+  touch-action: none;
   -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  touch-action: manipulation;
   margin: 0;
   padding: 0;
 }
@@ -429,7 +423,9 @@ body {
 }
 
 /* Light Theme Variables */
+html.light-theme,
 body.light-theme {
+  --bg-dark-rgb: 241, 245, 249;
   --bg-dark: #f1f5f9;
   --bg-card: rgba(255, 255, 255, 0.94);
   --bg-glass: rgba(255, 255, 255, 0.88);
@@ -439,6 +435,7 @@ body.light-theme {
   --text-muted: #94a3b8;
   --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.08);
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.08);
+  background-color: #ffffff !important;
 }
 
 .modal-title {

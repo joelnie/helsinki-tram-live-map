@@ -943,13 +943,18 @@
     if (save) localStorage.setItem('app_theme', theme);
 
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    const metaAppleStatusBar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
 
     if (theme === 'light') {
+      document.documentElement.classList.add('light-theme');
       document.body.classList.add('light-theme');
-      if (metaThemeColor) metaThemeColor.setAttribute('content', '#f1f5f9');
+      if (metaThemeColor) metaThemeColor.setAttribute('content', '#ffffff');
+      if (metaAppleStatusBar) metaAppleStatusBar.setAttribute('content', 'default');
     } else {
+      document.documentElement.classList.remove('light-theme');
       document.body.classList.remove('light-theme');
       if (metaThemeColor) metaThemeColor.setAttribute('content', '#0f172a');
+      if (metaAppleStatusBar) metaAppleStatusBar.setAttribute('content', 'black-translucent');
     }
 
     document.getElementById('btn-theme-dark').classList.toggle('active', theme === 'dark');
