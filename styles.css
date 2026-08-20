@@ -866,12 +866,13 @@ body.light-theme .palette-option-btn {
    ========================================================================== */
 .disturbance-container {
   position: absolute;
-  bottom: calc(var(--safe-bottom) + 14px);
+  bottom: calc(var(--safe-bottom) + 72px);
   left: 14px;
   z-index: 1050;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
 }
 
 .btn-disturbance {
