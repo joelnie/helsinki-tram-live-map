@@ -579,6 +579,7 @@
 
     updateDrawerStats(foundVeh);
     document.getElementById('detail-drawer').classList.remove('hidden');
+    document.getElementById('quick-line-bar')?.classList.add('hidden');
   }
 
   function deselectVehicle() {
@@ -586,6 +587,7 @@
     state.isFollowing = false;
     document.querySelectorAll('.tram-marker-wrapper').forEach(el => el.classList.remove('selected'));
     document.getElementById('detail-drawer').classList.add('hidden');
+    document.getElementById('quick-line-bar')?.classList.remove('hidden');
   }
 
   function updateDrawerStats(veh) {
@@ -645,7 +647,74 @@
       state.activeFilters = new Set(CONFIG.DEFAULT_LINES);
     }
 
+    renderCircleFilterBar();
     renderFilterButtons();
+  }
+
+  function toggleLineFilter(line) {
+    if (state.activeFilters.has(line)) {
+      if (state.activeFilters.size > 1) {
+        state.activeFilters.delete(line);
+      } else {
+        showToast('Vähintään yksi linja täytyy olla valittuna', 'warn');
+        return;
+      }
+    } else {
+      state.activeFilters.add(line);
+    }
+
+    localStorage.setItem('tram_active_filters', JSON.stringify(Array.from(state.activeFilters)));
+
+    state.vehicles.forEach((veh) => {
+      const isVisible = state.activeFilters.has(veh.line);
+      if (veh.marker) {
+        if (isVisible) {
+          if (!state.map.hasLayer(veh.marker)) veh.marker.addTo(state.map);
+        } else {
+          if (state.map.hasLayer(veh.marker)) state.map.removeLayer(veh.marker);
+        }
+      }
+    });
+
+    renderRouteTracks();
+    updateTramCounterUI();
+
+    renderCircleFilterBar();
+    renderFilterButtons();
+  }
+
+  function renderCircleFilterBar() {
+    const track = document.getElementById('circle-filter-track');
+    if (!track) return;
+    track.innerHTML = '';
+
+    CONFIG.DEFAULT_LINES.forEach((line) => {
+      const isSelected = state.activeFilters.has(line);
+      const meta = LINE_META[line] || { color: '#10b981' };
+
+      const btn = document.createElement('button');
+      btn.className = `circle-line-btn ${isSelected ? 'active' : ''}`;
+      btn.dataset.line = line;
+      btn.textContent = line;
+      btn.title = `Linja ${line}`;
+
+      if (isSelected) {
+        btn.style.backgroundColor = meta.color;
+        btn.style.borderColor = '#ffffff';
+        btn.style.boxShadow = `0 4px 12px ${meta.color}66`;
+      } else {
+        btn.style.backgroundColor = meta.color + '33';
+        btn.style.borderColor = 'transparent';
+        btn.style.boxShadow = 'none';
+      }
+
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleLineFilter(line);
+      });
+
+      track.appendChild(btn);
+    });
   }
 
   function renderFilterButtons() {
@@ -677,29 +746,7 @@
       `;
 
       btn.addEventListener('click', () => {
-        if (state.activeFilters.has(line)) {
-          if (state.activeFilters.size > 1) {
-            state.activeFilters.delete(line);
-          } else {
-            showToast('Vähintään yksi linja täytyy olla valittuna', 'warn');
-          }
-        } else {
-          state.activeFilters.add(line);
-        }
-        const activeNow = state.activeFilters.has(line);
-        btn.classList.toggle('active', activeNow);
-        if (activeNow) {
-          btn.style.borderColor = meta.color;
-          btn.style.backgroundColor = meta.color + '22';
-          btn.style.boxShadow = `0 4px 12px ${meta.color}44`;
-          btn.querySelector('.line-num').style.color = meta.color;
-        } else {
-          btn.style.borderColor = 'transparent';
-          btn.style.backgroundColor = '';
-          btn.style.boxShadow = '';
-          btn.querySelector('.line-num').style.color = 'inherit';
-        }
-        updateFilterSummaryText();
+        toggleLineFilter(line);
       });
 
       grid.appendChild(btn);
