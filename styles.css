@@ -511,6 +511,35 @@ html, body {
   color: var(--text-secondary);
 }
 
+/* Route Tracks Toggle Option */
+.track-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-glass);
+  padding: 10px 14px;
+  border-radius: 16px;
+  margin: 4px 0;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.toggle-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-hsl-green);
+  cursor: pointer;
+}
+
 /* Tram Line Selection Grid */
 .line-grid {
   display: grid;

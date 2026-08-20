@@ -18,7 +18,7 @@
     GTFS_RT_HTTP_URL: 'https://realtime.hsl.fi/realtime/vehicle-positions/v2/hsl',
     GTFS_RT_POLL_INTERVAL: 7000, // ms
     STALE_THRESHOLD_MS: 180000,   // 3 minutes
-    DEFAULT_LINES: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '15']
+    DEFAULT_LINES: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '13', '15']
   };
 
   // Line Descriptions & Destinations mapping for display
@@ -33,6 +33,7 @@
     '8': { name: 'Jätkäsaari – Arabia', color: '#00985f' },
     '9': { name: 'Länsiterminaali – Ilmala', color: '#00985f' },
     '10': { name: 'Kirurgi – Pikku Huopalahti', color: '#00985f' },
+    '13': { name: 'Kalasatama – Pasila', color: '#00985f' },
     '15': { name: 'Raide-Jokeri: Keilaniemi – Itäkeskus', color: '#007ac9', isLightRail: true }
   };
 
@@ -44,6 +45,9 @@
     userMarker: null,
     vehicles: new Map(), // vehicle_key -> vehicle object
     activeFilters: new Set(),
+    showRouteTracks: true,
+    routeData: null,
+    routePolylineGroup: null,
     selectedVehicleId: null,
     isFollowing: false,
     mqttClient: null,
@@ -62,6 +66,7 @@
     initMap();
     initUIEvents();
     checkIosPwaBanner();
+    loadRouteData();
     startRealtimeEngine();
     
     // Periodically remove vehicles with stale signals
@@ -71,7 +76,7 @@
   });
 
   // =========================================================================
-  // LEAFLET MAP INITIALIZATION
+  // LEAFLET MAP INITIALIZATION & ROUTE TRACKS
   // =========================================================================
   function initMap() {
     state.map = L.map('map', {
@@ -88,12 +93,55 @@
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a> | Data: HSL'
     }).addTo(state.map);
 
+    // Layer group for route track polylines
+    state.routePolylineGroup = L.layerGroup().addTo(state.map);
+
     // Custom Leaflet Zoom Control at top right
     L.control.zoom({ position: 'topright' }).addTo(state.map);
 
     // Map click clears selection
     state.map.on('click', () => {
       deselectVehicle();
+    });
+  }
+
+  // Load static track geometries from routes.json
+  async function loadRouteData() {
+    try {
+      const response = await fetch('routes.json');
+      if (!response.ok) return;
+      state.routeData = await response.json();
+      renderRouteTracks();
+    } catch (e) {
+      console.warn('Could not load routes.json:', e);
+    }
+  }
+
+  function renderRouteTracks() {
+    if (!state.routePolylineGroup) return;
+    state.routePolylineGroup.clearLayers();
+
+    if (!state.showRouteTracks || !state.routeData) return;
+
+    Object.keys(state.routeData).forEach((lineKey) => {
+      // Only render tracks for actively filtered tram lines
+      if (state.activeFilters.has(lineKey)) {
+        const segments = state.routeData[lineKey];
+        const isLightRail = lineKey === '15';
+        const color = isLightRail ? '#007ac9' : '#00985f';
+        const weight = isLightRail ? 4 : 3;
+
+        segments.forEach((seg) => {
+          const polyline = L.polyline(seg, {
+            color: color,
+            weight: weight,
+            opacity: 0.65,
+            smoothFactor: 1.5,
+            interactive: false
+          });
+          state.routePolylineGroup.addLayer(polyline);
+        });
+      }
     });
   }
 
@@ -583,10 +631,16 @@
   }
 
   function applyFilterChanges() {
+    const toggleCb = document.getElementById('toggle-tracks');
+    if (toggleCb) {
+      state.showRouteTracks = toggleCb.checked;
+    }
+
     // Save to localStorage
     localStorage.setItem('tram_active_filters', JSON.stringify(Array.from(state.activeFilters)));
+    localStorage.setItem('tram_show_tracks', String(state.showRouteTracks));
 
-    // Refresh markers on map
+    // Refresh vehicle markers on map
     state.vehicles.forEach((veh) => {
       const isVisible = state.activeFilters.has(veh.line);
       if (veh.marker) {
@@ -597,6 +651,9 @@
         }
       }
     });
+
+    // Refresh route track lines on map
+    renderRouteTracks();
 
     updateTramCounterUI();
     closeFilterModal();

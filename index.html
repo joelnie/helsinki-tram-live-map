@@ -107,9 +107,21 @@
       <div class="filter-actions">
         <button id="btn-select-all" class="btn-chip">Select All</button>
 
-        <button id="btn-select-main" class="btn-chip">City Lines (1–10)</button>
+        <button id="btn-select-main" class="btn-chip">City Lines (1–13)</button>
         <button id="btn-select-lightrail" class="btn-chip">Raide-Jokeri (15)</button>
         <button id="btn-clear-all" class="btn-chip btn-chip-secondary">Clear All</button>
+      </div>
+
+      <!-- Route Tracks Toggle Option -->
+      <div class="track-toggle-row">
+        <label class="toggle-label" for="toggle-tracks">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+            <line x1="4" y1="22" x2="4" y2="15"></line>
+          </svg>
+          Show Tram Route Tracks on Map
+        </label>
+        <input type="checkbox" id="toggle-tracks" class="toggle-checkbox" checked>
       </div>
 
       <div id="line-grid" class="line-grid">
