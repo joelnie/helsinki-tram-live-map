@@ -229,6 +229,18 @@ html, body {
   background: rgba(255, 255, 255, 0.18);
 }
 
+body.light-theme .btn-icon {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #0f172a;
+}
+
+body.light-theme .btn-icon:active,
+body.light-theme .btn-icon:hover {
+  background: rgba(0, 0, 0, 0.12);
+  color: #0f172a;
+}
+
 .badge-count {
   position: absolute;
   top: -4px;
@@ -335,19 +347,27 @@ html, body {
 }
 
 .toast {
-  background: rgba(15, 23, 42, 0.92);
+  background: var(--bg-card);
   border: 1px solid var(--border-glass);
   border-radius: 12px;
   padding: 10px 14px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-main);
   display: flex;
   align-items: center;
   gap: 8px;
   box-shadow: var(--shadow-lg);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   animation: toast-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.light-theme .toast {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #0f172a;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
 .toast.toast-info { border-left: 4px solid var(--color-hsl-green); }
