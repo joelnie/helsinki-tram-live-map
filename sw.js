@@ -3,7 +3,7 @@
  * Caches static shell assets with Network-First strategy for live code updates.
  */
 
-const CACHE_NAME = 'helsinki-tram-v1.0.8';
+const CACHE_NAME = 'helsinki-tram-v1.0.9';
 
 // Assets to pre-cache on service worker installation
 const STATIC_ASSETS = [
@@ -25,7 +25,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Pre-caching v1.0.8 application shell');
+      console.log('[SW] Pre-caching v1.0.9 application shell');
       return cache.addAll(STATIC_ASSETS).catch(err => console.warn('[SW] Pre-cache warning:', err));
     })
   );

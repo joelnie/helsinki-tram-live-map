@@ -29,7 +29,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 
   <!-- App Custom Styles -->
-  <link rel="stylesheet" href="styles.css?v=1.0.8">
+  <link rel="stylesheet" href="styles.css?v=1.0.9">
 </head>
 <body>
   <!-- Main Map Container -->
@@ -173,6 +173,14 @@
           </button>
         </div>
       </div>
+
+      <div class="settings-group">
+        <label id="lbl-basemap" class="settings-label">Pohjakartta</label>
+        <div class="segmented-control">
+          <button id="btn-map-carto" class="segmented-btn active" data-map="carto">CARTO Voyager</button>
+          <button id="btn-map-osm" class="segmented-btn" data-map="osm">OpenStreetMap</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -271,14 +279,17 @@
   <!-- Protobuf.js CDN (for GTFS-RT Fallback decoding) -->
   <script src="https://cdn.jsdelivr.net/npm/protobufjs@7.2.5/dist/protobuf.min.js"></script>
 
+  <!-- Optional Local Environment Config (ignored in git) -->
+  <script src="config.js" onerror="this.remove()"></script>
+
   <!-- Main Application Logic -->
-  <script src="app.js?v=1.0.8"></script>
+  <script src="app.js?v=1.0.9"></script>
 
   <!-- Service Worker Registration -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.0.8')
+        navigator.serviceWorker.register('./sw.js?v=1.0.9')
           .then(reg => {
             console.log('PWA Service Worker registered:', reg.scope);
             reg.update();

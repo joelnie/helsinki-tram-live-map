@@ -42,8 +42,11 @@ The application connects directly to official open APIs operated by **HSL (Helsi
    - **Payload**: GTFS-RT Protobuf decoded client-side via `protobuf.js`.
 3. **Route Track Geometries**:
    - **URL**: Digitransit GraphQL API (`https://api.digitransit.fi/routing/v2/hsl/gtfs/v1`)
+4. **Basemap Tile Layer**:
+   - Clean raster tiles provided by **CARTO Voyager** with automatic fallback to **OpenStreetMap**.
+   - Optional custom keys can be placed in a local `config.js` (see `config.example.js`) or selected in Settings.
 
-> 💡 **Zero API Key Required**: HSL open data feeds are free and open to the public without authentication keys.
+> 💡 **Open Transit Data**: HSL MQTT and GTFS-RT feeds are free and open to the public without authentication keys.
 
 ---
 
@@ -109,6 +112,7 @@ helsinki-tram-live-map/
 ├── index.html            # App shell, glassmorphic header, Poikkeustiedotteet card, modals
 ├── styles.css            # CSS tokens, HSL colors, Dark/Light theme, 3-state buttons, safe areas
 ├── app.js                # Map engine, Leaflet logic, MQTT client, GTFS-RT parser, filters, theme system
+├── config.example.js     # Template for custom API keys / environment configs
 ├── sw.js                 # Service worker for offline asset and tile caching
 ├── manifest.json         # PWA web manifest metadata
 ├── favicon.ico           # Browser favicon
