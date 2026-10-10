@@ -18,19 +18,21 @@
     GTFS_RT_HTTP_URL: 'https://realtime.hsl.fi/realtime/vehicle-positions/v2/hsl',
     GTFS_RT_POLL_INTERVAL: 7000, // ms
     STALE_THRESHOLD_MS: 180000,   // 3 minutes
-    DEFAULT_LINES: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '13', '15', 'H']
+    DEFAULT_LINES: ['1T', '2', '3', '4', '5T', '6', '7', '8', '9', '10', '13', '15', 'H']
   };
 
   // Line Descriptions, Destinations, & Distinct Color Palette for display
   const LINE_META = {
+    '1T': { name: { fi: 'Eira – Käpylä (Mannerheimintie)', en: 'Eira – Käpylä (via Mannerheimintie)' }, color: '#10b981' },
     '1': { name: { fi: 'Eira – Käpylä', en: 'Eira – Käpylä' }, color: '#10b981' },
     '2': { name: { fi: 'Olympiaterminaali – Pasila', en: 'Olympia Terminal – Pasila' }, color: '#2563eb' },
     '3': { name: { fi: 'Olympiaterminaali – Meilahti', en: 'Olympia Terminal – Meilahti' }, color: '#f59e0b' },
     '4': { name: { fi: 'Katajanokka – Munkkiniemi', en: 'Katajanokka – Munkkiniemi' }, color: '#84cc16' },
+    '5T': { name: { fi: 'Katajanokan terminaali – Rautatieasema', en: 'Katajanokka Terminal – Railway Station' }, color: '#f43f5e' },
     '5': { name: { fi: 'Katajanokan terminaali – Rautatientori', en: 'Katajanokka Terminal – Railway Station' }, color: '#f43f5e' },
     '6': { name: { fi: 'Hietalahti – Arabia', en: 'Hietalahti – Arabia' }, color: '#ec4899' },
     '7': { name: { fi: 'Länsiterminaali – Meilahden sairaala', en: 'West Terminal – Meilahti Hospital' }, color: '#a855f7' },
-    '8': { name: { fi: 'Jätkäsaari – Arabia', en: 'Jätkäsaari – Arabia' }, color: '#dc2626' },
+    '8': { name: { fi: 'Ruusulankatu – Arabia', en: 'Ruusulankatu – Arabia' }, color: '#dc2626' },
     '9': { name: { fi: 'Länsiterminaali – Ilmala', en: 'West Terminal – Ilmala' }, color: '#14b8a6' },
     '10': { name: { fi: 'Kirurgi – Pikku Huopalahti', en: 'Surgical Hospital – Pikku Huopalahti' }, color: '#6366f1' },
     '13': { name: { fi: 'Kalasatama – Pasila', en: 'Kalasatama – Pasila' }, color: '#eab308' },
@@ -513,20 +515,33 @@
       return 'H';
     }
 
-    // Direct route map for HSL GTFS route IDs
+    // Direct route map for HSL GTFS route IDs and specific line aliases
     const routeMap = {
-      '1001': '1', '1002': '2', '1003': '3', '1004': '4',
-      '1005': '5', '1006': '6', '1007': '7', '1008': '8',
-      '1009': '9', '1010': '10', '1013': '13', '1015': '15',
-      '1008T': '8', '1009T': '9'
+      '1001': '1T', '1001T': '1T', '1T': '1T', '1': '1T',
+      '1002': '2', '2': '2',
+      '1003': '3', '3': '3',
+      '1004': '4', '4': '4',
+      '1005': '5T', '1005T': '5T', '5T': '5T', '5': '5T',
+      '1006': '6', '6': '6',
+      '1007': '7', '7': '7',
+      '1008': '8', '8': '8', '1008T': '8', '8T': '8',
+      '1009': '9', '9': '9', '1009T': '9', '9T': '9',
+      '1010': '10', '10': '10',
+      '1013': '13', '13': '13',
+      '1015': '15', '15': '15'
     };
     if (routeMap[str]) return routeMap[str];
 
     let digits = str.replace(/[^0-9]/g, '');
     if (digits.length >= 4 && digits.startsWith('10')) {
       const shortNum = String(parseInt(digits.substring(2), 10));
+      if (shortNum === '1') return '1T';
+      if (shortNum === '5') return '5T';
       if (CONFIG.DEFAULT_LINES.includes(shortNum)) return shortNum;
     }
+
+    if (digits === '1') return '1T';
+    if (digits === '5') return '5T';
 
     if (CONFIG.DEFAULT_LINES.includes(digits)) return digits;
     if (CONFIG.DEFAULT_LINES.includes(str)) return str;
@@ -809,6 +824,8 @@
     if (savedModes) {
       try {
         const parsed = JSON.parse(savedModes);
+        if (parsed['1'] && !parsed['1T']) parsed['1T'] = parsed['1'];
+        if (parsed['5'] && !parsed['5T']) parsed['5T'] = parsed['5'];
         CONFIG.DEFAULT_LINES.forEach((line) => {
           state.lineModes.set(line, parsed[line] || 'both');
         });
@@ -821,6 +838,8 @@
         try {
           const parsed = JSON.parse(savedFilters);
           const activeSet = new Set(parsed);
+          if (activeSet.has('1')) activeSet.add('1T');
+          if (activeSet.has('5')) activeSet.add('5T');
           CONFIG.DEFAULT_LINES.forEach((line) => {
             state.lineModes.set(line, activeSet.has(line) ? 'both' : 'hidden');
           });
@@ -994,28 +1013,28 @@
   // =========================================================================
   const PALETTES = {
     default: {
-      '1': '#10b981', '2': '#2563eb', '3': '#f59e0b', '4': '#84cc16',
-      '5': '#f43f5e', '6': '#ec4899', '7': '#a855f7', '8': '#dc2626',
+      '1T': '#10b981', '1': '#10b981', '2': '#2563eb', '3': '#f59e0b', '4': '#84cc16',
+      '5T': '#f43f5e', '5': '#f43f5e', '6': '#ec4899', '7': '#a855f7', '8': '#dc2626',
       '9': '#14b8a6', '10': '#6366f1', '13': '#eab308', '15': '#007ac9', 'H': '#64748b'
     },
     rainbow: {
-      '1': '#ff0055', '2': '#ff5500', '3': '#ffaa00', '4': '#aaff00',
-      '5': '#00ff66', '6': '#00ffcc', '7': '#0099ff', '8': '#3333ff',
+      '1T': '#ff0055', '1': '#ff0055', '2': '#ff5500', '3': '#ffaa00', '4': '#aaff00',
+      '5T': '#00ff66', '5': '#00ff66', '6': '#00ffcc', '7': '#0099ff', '8': '#3333ff',
       '9': '#8800ff', '10': '#ff00ff', '13': '#ff00aa', '15': '#00e5ff', 'H': '#71717a'
     },
     pale: {
-      '1': '#a7f3d0', '2': '#fed7aa', '3': '#fef08a', '4': '#d9f99d',
-      '5': '#fecdd3', '6': '#fbcfe8', '7': '#e9d5ff', '8': '#cff4fc',
+      '1T': '#a7f3d0', '1': '#a7f3d0', '2': '#fed7aa', '3': '#fef08a', '4': '#d9f99d',
+      '5T': '#fecdd3', '5': '#fecdd3', '6': '#fbcfe8', '7': '#e9d5ff', '8': '#cff4fc',
       '9': '#ccfbf1', '10': '#c7d2fe', '13': '#fef08a', '15': '#bae6fd', 'H': '#94a3b8'
     },
     hsl: {
-      '1': '#007348', '2': '#007348', '3': '#007348', '4': '#007348',
-      '5': '#007348', '6': '#007348', '7': '#007348', '8': '#007348',
+      '1T': '#007348', '1': '#007348', '2': '#007348', '3': '#007348', '4': '#007348',
+      '5T': '#007348', '5': '#007348', '6': '#007348', '7': '#007348', '8': '#007348',
       '9': '#007348', '10': '#007348', '13': '#007348', '15': '#007ac9', 'H': '#64748b'
     },
     dark: {
-      '1': '#18181b', '2': '#18181b', '3': '#18181b', '4': '#18181b',
-      '5': '#18181b', '6': '#18181b', '7': '#18181b', '8': '#18181b',
+      '1T': '#18181b', '1': '#18181b', '2': '#18181b', '3': '#18181b', '4': '#18181b',
+      '5T': '#18181b', '5': '#18181b', '6': '#18181b', '7': '#18181b', '8': '#18181b',
       '9': '#18181b', '10': '#18181b', '13': '#18181b', '15': '#18181b', 'H': '#3f3f46'
     }
   };

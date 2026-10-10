@@ -283,13 +283,13 @@
   <script src="config.js" onerror="this.remove()"></script>
 
   <!-- Main Application Logic -->
-  <script src="app.js?v=1.1.1"></script>
+  <script src="app.js?v=1.1.2"></script>
 
   <!-- Service Worker Registration -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.1.1')
+        navigator.serviceWorker.register('./sw.js?v=1.1.2')
           .then(reg => {
             console.log('PWA Service Worker registered:', reg.scope);
             reg.update();
