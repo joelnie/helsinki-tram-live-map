@@ -60,7 +60,7 @@
     currentLang: localStorage.getItem('app_lang') || 'fi',
     currentTheme: localStorage.getItem('app_theme') || 'dark',
     currentPalette: localStorage.getItem('tram_palette') || 'default',
-    currentBasemap: localStorage.getItem('app_basemap_selected') || 'carto',
+    currentBasemap: localStorage.getItem('user_basemap_preference') || 'carto',
     tileLayer: null
   };
 
@@ -107,10 +107,13 @@
   function setBasemap(mapType, save = true) {
     state.currentBasemap = mapType;
     if (save) {
-      localStorage.setItem('app_basemap_selected', mapType);
+      localStorage.setItem('user_basemap_preference', mapType);
     }
-    // Clean up obsolete key if present
-    try { localStorage.removeItem('app_basemap'); } catch {}
+    // Clean up obsolete keys if present
+    try {
+      localStorage.removeItem('app_basemap');
+      localStorage.removeItem('app_basemap_selected');
+    } catch {}
 
     const btnCarto = document.getElementById('btn-map-carto');
     const btnOsm = document.getElementById('btn-map-osm');
@@ -124,22 +127,25 @@
       state.tileLayer = null;
     }
 
-    const cartoKey = getCartoKey();
-    if (mapType === 'carto' && cartoKey) {
-      state.tileLayer = L.tileLayer(
-        `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${encodeURIComponent(cartoKey)}`,
-        {
-          maxZoom: 19,
-          subdomains: 'abcd',
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a> | Data: HSL'
-        }
-      ).addTo(state.map);
-    } else {
+    if (mapType === 'osm') {
       state.tileLayer = L.tileLayer(
         'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
         {
-          maxZoom: 19,
+          maxZoom: 20,
+          maxNativeZoom: 19,
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Data: HSL'
+        }
+      ).addTo(state.map);
+    } else {
+      // Default & Primary: CARTO Voyager with user API key
+      const cartoKey = getCartoKey();
+      state.tileLayer = L.tileLayer(
+        `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${encodeURIComponent(cartoKey)}`,
+        {
+          maxZoom: 20,
+          maxNativeZoom: 18,
+          subdomains: 'abcd',
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a> | Data: HSL'
         }
       ).addTo(state.map);
     }
@@ -149,11 +155,12 @@
     state.map = L.map('map', {
       center: CONFIG.HELSINKI_CENTER,
       zoom: CONFIG.DEFAULT_ZOOM,
+      maxZoom: 20,
       zoomControl: false,
       attributionControl: false
     });
 
-    // Initialize basemap (CARTO Voyager with key, or OpenStreetMap fallback)
+    // Initialize basemap (default CARTO Voyager, or user-selected preference)
     setBasemap(state.currentBasemap, false);
 
     // Layer group for route track polylines
