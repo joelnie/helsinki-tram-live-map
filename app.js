@@ -202,9 +202,16 @@
   // Load static track geometries from routes.json
   async function loadRouteData() {
     try {
-      const response = await fetch('routes.json');
+      const response = await fetch('routes.json?v=1.1.3');
       if (!response.ok) return;
       state.routeData = await response.json();
+      if (state.routeData) {
+        // Guarantee key aliasing for 1/1T and 5/5T in memory
+        if (state.routeData['5'] && !state.routeData['5T']) state.routeData['5T'] = state.routeData['5'];
+        if (state.routeData['5T'] && !state.routeData['5']) state.routeData['5'] = state.routeData['5T'];
+        if (state.routeData['1'] && !state.routeData['1T']) state.routeData['1T'] = state.routeData['1'];
+        if (state.routeData['1T'] && !state.routeData['1']) state.routeData['1'] = state.routeData['1T'];
+      }
       renderRouteTracks();
     } catch (e) {
       console.warn('Could not load routes.json:', e);
@@ -261,9 +268,14 @@
     const totalActive = visibleTrackLines.length;
 
     visibleTrackLines.forEach((lineKey, idx) => {
-      if (state.routeData[lineKey]) {
-        const segments = state.routeData[lineKey];
-        const meta = LINE_META[lineKey] || { color: '#10b981' };
+      const segments = state.routeData[lineKey] ||
+        (lineKey === '5T' ? state.routeData['5'] : null) ||
+        (lineKey === '5' ? state.routeData['5T'] : null) ||
+        (lineKey === '1T' ? state.routeData['1'] : null) ||
+        (lineKey === '1' ? state.routeData['1T'] : null);
+
+      if (segments) {
+        const meta = LINE_META[lineKey] || LINE_META[lineKey.replace('T', '')] || { color: '#10b981' };
         const isLightRail = lineKey === '15';
         const weight = isLightRail ? 4.5 : 3.5;
 

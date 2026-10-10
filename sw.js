@@ -3,7 +3,7 @@
  * Caches static shell assets with Network-First strategy for live code updates.
  */
 
-const CACHE_NAME = 'helsinki-tram-v1.1.2';
+const CACHE_NAME = 'helsinki-tram-v1.1.3';
 
 // Assets to pre-cache on service worker installation
 const STATIC_ASSETS = [
@@ -13,6 +13,7 @@ const STATIC_ASSETS = [
   'app.js',
   'manifest.json',
   'routes.json',
+  'routes.json?v=1.1.3',
   'stops.json',
   'favicon.ico',
   'icons/icon-192.png',
@@ -25,7 +26,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Pre-caching v1.1.2 application shell');
+      console.log('[SW] Pre-caching v1.1.3 application shell');
       return cache.addAll(STATIC_ASSETS).catch(err => console.warn('[SW] Pre-cache warning:', err));
     })
   );
@@ -47,7 +48,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch Event - Network-First for JS/CSS/HTML so updates are instantaneous
+// Fetch Event - Network-First for JS/CSS/HTML/JSON so updates are instantaneous
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
@@ -60,8 +61,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Network-First Strategy for App Shell (HTML, JS, CSS)
-  if (event.request.mode === 'navigate' || url.pathname.endsWith('.js') || url.pathname.endsWith('.css') || url.pathname.endsWith('index.html') || url.pathname === '/' || url.pathname.endsWith('/')) {
+  // 2. Network-First Strategy for App Shell (HTML, JS, CSS, JSON)
+  if (event.request.mode === 'navigate' || 
+      url.pathname.endsWith('.js') || 
+      url.pathname.endsWith('.css') || 
+      url.pathname.endsWith('.json') || 
+      url.pathname.includes('routes.json') ||
+      url.pathname.endsWith('index.html') || 
+      url.pathname === '/' || 
+      url.pathname.endsWith('/')) {
     event.respondWith(
       fetch(event.request).then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
