@@ -60,7 +60,7 @@
     currentLang: localStorage.getItem('app_lang') || 'fi',
     currentTheme: localStorage.getItem('app_theme') || 'dark',
     currentPalette: localStorage.getItem('tram_palette') || 'default',
-    currentBasemap: localStorage.getItem('app_basemap') || 'carto',
+    currentBasemap: localStorage.getItem('app_basemap_selected') || 'carto',
     tileLayer: null
   };
 
@@ -106,7 +106,11 @@
 
   function setBasemap(mapType, save = true) {
     state.currentBasemap = mapType;
-    if (save) localStorage.setItem('app_basemap', mapType);
+    if (save) {
+      localStorage.setItem('app_basemap_selected', mapType);
+    }
+    // Clean up obsolete key if present
+    try { localStorage.removeItem('app_basemap'); } catch {}
 
     const btnCarto = document.getElementById('btn-map-carto');
     const btnOsm = document.getElementById('btn-map-osm');
@@ -130,14 +134,6 @@
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a> | Data: HSL'
         }
       ).addTo(state.map);
-
-      let fallbackAttempted = false;
-      state.tileLayer.on('tileerror', () => {
-        if (fallbackAttempted || state.currentBasemap !== 'carto') return;
-        fallbackAttempted = true;
-        console.warn('[Map] CARTO tiles failed to load. Falling back to OpenStreetMap standard tiles.');
-        setBasemap('osm', true);
-      });
     } else {
       state.tileLayer = L.tileLayer(
         'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
